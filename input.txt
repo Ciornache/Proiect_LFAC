@@ -1,0 +1,31 @@
+int functie(int a, int b, int c)
+int a = 4, b = 10;
+int c = 10;
+OPEN WALLET
+a = 5;
+print(a);
+a = a + 5;
+print(a);
+if a != b
+{
+    print(2 + 67);
+    print(69 == 96);
+}
+else {
+    print(124);
+}
+a = a + 1;
+print(a);
+if a % 3 == 0 
+{
+    print(0);
+}
+else if a % 3 == 1 
+{
+    print(1);
+}
+else 
+{
+    print(2);
+}
+CLOSE WALLET
