@@ -63,21 +63,25 @@ extern int yydebug;
     CLOSE_WALLET = 264,            /* CLOSE_WALLET  */
     PRINT = 265,                   /* PRINT  */
     TYPEOF = 266,                  /* TYPEOF  */
-    AND = 267,                     /* AND  */
-    OR = 268,                      /* OR  */
-    EQ = 269,                      /* EQ  */
-    NEQ = 270,                     /* NEQ  */
-    LT = 271,                      /* LT  */
-    LEQ = 272,                     /* LEQ  */
-    HT = 273,                      /* HT  */
-    HEQ = 274,                     /* HEQ  */
-    IF = 275,                      /* IF  */
-    ELSE = 276,                    /* ELSE  */
-    ELSE_IF = 277,                 /* ELSE_IF  */
-    WHILE = 278,                   /* WHILE  */
-    FOR = 279,                     /* FOR  */
-    SCOPE_START = 280,             /* SCOPE_START  */
-    SCOPE_END = 281                /* SCOPE_END  */
+    PRIVATE = 267,                 /* PRIVATE  */
+    PUBLIC = 268,                  /* PUBLIC  */
+    PROTECTED = 269,               /* PROTECTED  */
+    CLASS = 270,                   /* CLASS  */
+    AND = 271,                     /* AND  */
+    OR = 272,                      /* OR  */
+    EQ = 273,                      /* EQ  */
+    NEQ = 274,                     /* NEQ  */
+    LT = 275,                      /* LT  */
+    LEQ = 276,                     /* LEQ  */
+    HT = 277,                      /* HT  */
+    HEQ = 278,                     /* HEQ  */
+    IF = 279,                      /* IF  */
+    ELSE = 280,                    /* ELSE  */
+    ELSE_IF = 281,                 /* ELSE_IF  */
+    WHILE = 282,                   /* WHILE  */
+    FOR = 283,                     /* FOR  */
+    SCOPE_START = 284,             /* SCOPE_START  */
+    SCOPE_END = 285                /* SCOPE_END  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -92,7 +96,7 @@ union YYSTYPE
     int iValue;
     bool bValue;
 
-#line 96 "lang.tab.h"
+#line 100 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

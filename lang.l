@@ -17,6 +17,22 @@ specialCharacters [_|-]
 "true" {yylval.bValue = true; return BOOLEAN_LITERAL;}
 "false" {yylval.bValue = false; return BOOLEAN_LITERAL;}
 "\""[^\\]*"\"" {yylval.strValue = strdup(yytext); return STRING_LITERAL;}
+"class"   { 
+    printf("Matched CLASS token\n");
+    return CLASS; 
+}
+"private" { 
+    printf("Matched PRIVATE token\n");
+    return PRIVATE; 
+}
+"public"  { 
+    printf("Matched PUBLIC token\n");
+    return PUBLIC; 
+}
+"protected" { 
+    printf("Matched PROTECTED token\n");
+    return PROTECTED; 
+}
 "&&" {return AND;}
 "||" {return OR;}
 "!=" {return NEQ;}

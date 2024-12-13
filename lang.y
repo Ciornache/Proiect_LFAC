@@ -12,7 +12,7 @@
     SymTable * globalSymTable;
     std::vector<std::pair<std::string, value>> unSymbols;
     bool globalAreaOn = true;
-    std::pair<bool, int> ifController;
+    std::pair<bool, int> ifController, whileController;
     std::vector<SymTable*> symTables;
 
 %}
@@ -29,6 +29,8 @@
 %token<strValue> STRING_LITERAL
 %token OPEN_WALLET CLOSE_WALLET 
 %token PRINT TYPEOF
+%token PRIVATE PUBLIC PROTECTED
+%token CLASS
 %token AND
 %token OR
 %token EQ NEQ LT LEQ HT HEQ
@@ -65,6 +67,17 @@ ARRAY_LITERAL : '[' INTEGER_EXPRESSION ';' INTEGER_EXPRESSION ']'
 
 DECLARATIONS_ELEMENT : LINE_DECLARATION
                      | FUNCTION_DECLARATION
+                     | CLASS_DEFINITION
+
+CLASS_DEFINITION : ACCESS_MODIFIER CLASS ID SCOPE_START CLASS_MEMBER_LIST SCOPE_END ;
+
+CLASS_MEMBER_LIST : /* empty */ ;
+
+ACCESS_MODIFIER : PRIVATE
+                | PUBLIC
+                | PROTECTED
+                |
+                ;
 
 DECLARATIONS :  DECLARATIONS_ELEMENT
              |  DECLARATIONS_ELEMENT DECLARATIONS
@@ -114,9 +127,13 @@ END_SCOPE : SCOPE_END {
 
 SCOPE : BEGIN_SCOPE CODE_AREA END_SCOPE
 
-WHILE_STATEMENT : WHILE BOOLEAN_EXPRESSION
+WHILE_STATEMENT : WHILE BOOLEAN_EXPRESSION {
+    whileController.first = true;
+}
 
-WHILE_BLOCK : WHILE_STATEMENT SCOPE
+WHILE_BLOCK : WHILE_STATEMENT SCOPE {
+    whileController.first = false;
+}
 
 IF_BLOCK : IF_COMPOSITION {
     ifController = {false, 0};
@@ -358,7 +375,7 @@ bool isSymbolValid(std::string s, std::string type)
 
 bool validateStatement()
 {
-    if(!ifController.first)
+    if(!ifController.first && !whileController.first)
         return true;
     if(ifController.first && ifController.second == 1)
         return true;
