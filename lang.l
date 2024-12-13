@@ -50,6 +50,13 @@ specialCharacters [_|-]
 "for" {return FOR;}
 "{" {return SCOPE_START;}
 "}" {return SCOPE_END;}
+"+" {yylval.strValue = strdup(yytext); return PLUS;}
+"-" {yylval.strValue = strdup(yytext); return MINUS;}
+"*" {yylval.strValue = strdup(yytext); return MUL;}
+"/" {yylval.strValue = strdup(yytext); return DIV;}
+"%" {yylval.strValue = strdup(yytext);return MOD;}
+"++" {return INCR;}
+"--" {return DECR;}
 
 
 {letter}({letter}|{digit}|{specialCharacters})* {yylval.strValue=strdup(yytext); return ID;}

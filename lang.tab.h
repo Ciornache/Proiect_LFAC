@@ -81,7 +81,14 @@ extern int yydebug;
     WHILE = 282,                   /* WHILE  */
     FOR = 283,                     /* FOR  */
     SCOPE_START = 284,             /* SCOPE_START  */
-    SCOPE_END = 285                /* SCOPE_END  */
+    SCOPE_END = 285,               /* SCOPE_END  */
+    PLUS = 286,                    /* PLUS  */
+    MINUS = 287,                   /* MINUS  */
+    MUL = 288,                     /* MUL  */
+    DIV = 289,                     /* DIV  */
+    MOD = 290,                     /* MOD  */
+    INCR = 291,                    /* INCR  */
+    DECR = 292                     /* DECR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -96,7 +103,7 @@ union YYSTYPE
     int iValue;
     bool bValue;
 
-#line 100 "lang.tab.h"
+#line 107 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

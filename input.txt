@@ -1,10 +1,11 @@
 class Base 
 { 
 
-}
-int functie(int a, int b, int c)
+};
+int f(int a, int b, int c);
 int a = 4, b = 10;
 int c = 10;
+int r;
 OPEN WALLET
 a = 5;
 print(a);
@@ -24,6 +25,10 @@ while a % 2 == 0
 {
     print(532);
 }
+for(int d = 1; d * d <= n; d += 2) {
+    print(d);
+}
+a = f(1, 2, 3);
 if a % 3 == 0 
 {
     print(0);

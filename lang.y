@@ -12,7 +12,7 @@
     SymTable * globalSymTable;
     std::vector<std::pair<std::string, value>> unSymbols;
     bool globalAreaOn = true;
-    std::pair<bool, int> ifController, whileController;
+    std::pair<bool, int> ifController, whileController, forController;
     std::vector<SymTable*> symTables;
 
 %}
@@ -36,38 +36,43 @@
 %token EQ NEQ LT LEQ HT HEQ
 %token IF ELSE ELSE_IF WHILE FOR
 %token SCOPE_START SCOPE_END 
+%token PLUS MINUS MUL DIV MOD INCR DECR
 
 %type<iValue> INTEGER_EXPRESSION
-%type<bValue> BOOLEAN_EXPRESSION
-%type<bValue> BOOLEAN_EQUATION
+%type<bValue> BOOLEAN_EXPRESSION BOOLEAN_EQUATION
+%type<strValue> PLUS MINUS MUL DIV MOD
 
 %left OR
 %left AND
 %left NEQ EQ LT LEQ HT HEQ
-%left '+' '-'
-%left '*' '/' '%'
+%left PLUS MINUS
+%left MUL DIV MOD
 
 %start S
 
 %%
 
-FUNCTION_CALL : ID '(' PARAMETER_LIST ')'
+/*  Start Area  */
 
-PARAMETER_LIST : PARAMETER
-               | PARAMETER ',' PARAMETER_LIST
+S : DECLARATIONS OPEN_WALLET MAIN CLOSE_WALLET {
+        printf("Program compiled succesfully!\n");
+        return 0;
+}
+   ;
 
-PARAMETER : INTEGER_EXPRESSION
-          | FUNCTION_CALL
+/*              Declaration Area            */
+
+
+/*  Function Declaration Grammar   */
+
 
 FUNCTION_DECLARATION : TYPE ID '(' DECL_PARAMETER_SEQUENCE ')'
 
-ARRAY_LITERAL : '[' INTEGER_EXPRESSION ';' INTEGER_EXPRESSION ']'
-              | '[' INTEGER_EXPRESSION ']'
-              ;
+DECL_PARAMETER_SEQUENCE : TYPE ID ',' DECL_PARAMETER_SEQUENCE
+                        | TYPE ID 
 
-DECLARATIONS_ELEMENT : LINE_DECLARATION
-                     | FUNCTION_DECLARATION
-                     | CLASS_DEFINITION
+
+/*   Class Declaration Grammar       */
 
 CLASS_DEFINITION : ACCESS_MODIFIER CLASS ID SCOPE_START CLASS_MEMBER_LIST SCOPE_END ;
 
@@ -79,17 +84,8 @@ ACCESS_MODIFIER : PRIVATE
                 |
                 ;
 
-DECLARATIONS :  DECLARATIONS_ELEMENT
-             |  DECLARATIONS_ELEMENT DECLARATIONS
+/* Global Variables Declaration Grammar */
 
-DECL_PARAMETER_SEQUENCE : TYPE ID ',' DECL_PARAMETER_SEQUENCE
-                   | TYPE ID 
-
-IDSEQUENCE :   ID ',' IDSEQUENCE {unSymbols.push_back({$1, 0});}
-             | ID ';' {unSymbols.push_back({$1, 0});}
-             | ASSIGNMENT_STATEMENT ',' IDSEQUENCE
-             | ASSIGNMENT_STATEMENT ';'
-             ;
 LINE_DECLARATION : TYPE IDSEQUENCE {
         SymTable * symTable = symTables.back();
         bool ok = 0;
@@ -114,6 +110,30 @@ LINE_DECLARATION : TYPE IDSEQUENCE {
         unSymbols.clear();
 }
 
+IDSEQUENCE : ID_SEQUENCE_ELEMENT 
+           | ID_SEQUENCE_ELEMENT ',' IDSEQUENCE  
+           ;
+
+ID_SEQUENCE_ELEMENT : ID {
+                         unSymbols.push_back({$1, 0});
+                    }
+                    | ASSIGNMENT_STATEMENT
+
+
+/*  General Declaration Grammar  */
+
+DECLARATIONS :  DECLARATIONS_ELEMENT
+             |  DECLARATIONS_ELEMENT DECLARATIONS
+
+DECLARATIONS_ELEMENT : LINE_DECLARATION ';'
+                     | FUNCTION_DECLARATION ';'
+                     | CLASS_DEFINITION ';'
+
+
+/*             Scope Grammar              */
+
+
+SCOPE : BEGIN_SCOPE CODE_AREA END_SCOPE
 
 BEGIN_SCOPE : SCOPE_START {
     symTables.push_back(new SymTable);
@@ -125,7 +145,34 @@ END_SCOPE : SCOPE_END {
     symTables.pop_back();
 }
 
-SCOPE : BEGIN_SCOPE CODE_AREA END_SCOPE
+/*              Block Grammar                     */
+
+BLOCK : IF_BLOCK
+      | WHILE_BLOCK
+      | FOR_BLOCK
+
+/* For Block Grammar   */
+
+FOR_BLOCK : FOR_STATEMENT SCOPE {
+    forController.first = false;
+}
+
+FOR_STATEMENT : FOR '(' INIT_DECL_COMP ';' STOP_CONDITION_COMP ';' MODIFY_COMP ')' {
+    forController.first = true;
+}
+
+INIT_DECL_COMP : LINE_DECLARATION
+               | LINE_INITIALIZATION 
+
+STOP_CONDITION_COMP : BOOLEAN_EXPRESSION
+
+MODIFY_COMP : LINE_INITIALIZATION
+
+
+LINE_INITIALIZATION : ASSIGNMENT_STATEMENT
+                    | ASSIGNMENT_STATEMENT ',' LINE_INITIALIZATION
+
+/* While Block Grammar */
 
 WHILE_STATEMENT : WHILE BOOLEAN_EXPRESSION {
     whileController.first = true;
@@ -134,6 +181,8 @@ WHILE_STATEMENT : WHILE BOOLEAN_EXPRESSION {
 WHILE_BLOCK : WHILE_STATEMENT SCOPE {
     whileController.first = false;
 }
+
+/* If Block Grammar */
 
 IF_BLOCK : IF_COMPOSITION {
     ifController = {false, 0};
@@ -147,43 +196,46 @@ IF_COMPOSITION  : IF_STRUCTURE {
 IF_STRUCTURE : IF_STATEMENT SCOPE 
              | IF_STATEMENT SCOPE ELSE_BLOCKS
 
-ELSE_BLOCKS : ELSE_IF_BLOCK ELSE_BLOCK
-            | ELSE_BLOCK
-
 IF_STATEMENT : IF BOOLEAN_EXPRESSION {
     ifController = {true, 0};
     if($2) 
         ifController.second = 1;
 }
 
+ELSE_BLOCKS : ELSE_IF_BLOCK ELSE_BLOCK
+            | ELSE_BLOCK
+
+ELSE_IF_BLOCK : ELSE_IF_STATEMENT SCOPE
+              | ELSE_IF_STATEMENT SCOPE ELSE_IF_BLOCK
+
+ELSE_BLOCK : ELSE_STATEMENT SCOPE
+
 ELSE_IF_STATEMENT : ELSE_IF  BOOLEAN_EXPRESSION  {
     if($2 && !ifController.second)
         ifController.second = 1;
 }
-
-ELSE_IF_BLOCK : ELSE_IF_STATEMENT SCOPE
-              | ELSE_IF_STATEMENT SCOPE ELSE_IF_BLOCK
 
 ELSE_STATEMENT : ELSE {
     if(!ifController.second)
          ifController.second = 1;
 }
 
-ELSE_BLOCK : ELSE_STATEMENT SCOPE
+
+/*              Main Area           */            
 
 MAIN : CODE_AREA 
 
 CODE_AREA_ELEMENT : BLOCK 
                   | STATEMENT ';'
+                  | LINE_DECLARATION ';'
                   ;
 
 CODE_AREA : CODE_AREA_ELEMENT 
           | CODE_AREA_ELEMENT CODE_AREA
           ;
 
-BLOCK : IF_BLOCK
-      | WHILE_BLOCK
-    
+/*          Statement Area          */
+
 STATEMENT :   ASSIGNMENT_STATEMENT
             | PRINT_STATEMENT
             | TYPE_OF_STATEMENT
@@ -225,7 +277,12 @@ ASSIGNMENT_STATEMENT : ID '=' INTEGER_EXPRESSION {
                     }
                     | ID '=' ARRAY_LITERAL
                     | ID '=' FUNCTION_CALL
-    
+                    | ID OPERATOR '=' INTEGER_EXPRESSION
+                    | ID INCR
+                    | ID DECR
+
+/* Print Statement Grammar  */
+
 PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
                     if(validateStatement()) 
                         std::cout << $3 << '\n';
@@ -238,13 +295,25 @@ PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
                         else std::cout << "false\n";
                     }
                 }
-                
+
+/*  Type Of Statement Grammar  */
+
 TYPE_OF_STATEMENT : TYPEOF '(' INTEGER_EXPRESSION ')' {
                     std::cout << "integer\n";
                 }
                 |   TYPEOF '(' BOOLEAN_EXPRESSION ')' {
                     std::cout << "bool\n";
                 }
+
+/*         RValue Expressions Area           */
+
+OPERATOR : PLUS 
+         | MINUS 
+         | MUL 
+         | DIV
+         | MOD
+
+/*  Boolean Expression Grammar  */
 
 BOOLEAN_EXPRESSION :  BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION {
                             $$ = ($1 && $3);
@@ -286,6 +355,8 @@ BOOLEAN_EQUATION : INTEGER_EXPRESSION EQ INTEGER_EXPRESSION {
                         $$ = $1;
                     }
 
+/*  Integer Expression Grammar      */
+
 INTEGER_EXPRESSION : ID {
                 SymTable * symTable = findSymTable(std::string($1));
                 if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
@@ -304,24 +375,23 @@ INTEGER_EXPRESSION : ID {
                 $$ = $1;
             }
             |
-            INTEGER_EXPRESSION '+' INTEGER_EXPRESSION {
+            INTEGER_EXPRESSION PLUS INTEGER_EXPRESSION {
                 $$ = $1 + $3;
             }
             |
-            INTEGER_EXPRESSION '*' INTEGER_EXPRESSION {
+            INTEGER_EXPRESSION MUL INTEGER_EXPRESSION {
                 $$ = $1 * $3;
             }
             |
-            INTEGER_EXPRESSION '-' INTEGER_EXPRESSION {
+            INTEGER_EXPRESSION MINUS INTEGER_EXPRESSION {
                 $$ = $1 - $3;
             }
             |
-            INTEGER_EXPRESSION '%' INTEGER_EXPRESSION {
-                std::cout << "AICI!\n";
+            INTEGER_EXPRESSION MOD INTEGER_EXPRESSION {
                 $$ = $1 % $3;
             }
             |
-            INTEGER_EXPRESSION '/' INTEGER_EXPRESSION {
+            INTEGER_EXPRESSION DIV INTEGER_EXPRESSION {
                 $$ = $1 / $3;
             }
             |
@@ -330,12 +400,22 @@ INTEGER_EXPRESSION : ID {
             }
             ;
 
+/*  Function Call Grammar */
 
-S : DECLARATIONS OPEN_WALLET MAIN CLOSE_WALLET {
-        printf("Program compiled succesfully!\n");
-        return 0;
-}
-   ;
+FUNCTION_CALL : ID '(' PARAMETER_LIST ')'
+
+PARAMETER_LIST : PARAMETER
+               | PARAMETER ',' PARAMETER_LIST
+
+PARAMETER : INTEGER_EXPRESSION
+          | FUNCTION_CALL
+
+/* Array Grammar */
+
+ARRAY_LITERAL : '[' INTEGER_EXPRESSION ';' INTEGER_EXPRESSION ']'
+              | '[' INTEGER_EXPRESSION ']'
+              ;
+
 %%
 
 void yyerror(std::string s)
@@ -375,7 +455,7 @@ bool isSymbolValid(std::string s, std::string type)
 
 bool validateStatement()
 {
-    if(!ifController.first && !whileController.first)
+    if(!ifController.first && !whileController.first && !forController.first)
         return true;
     if(ifController.first && ifController.second == 1)
         return true;
