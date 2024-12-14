@@ -41,6 +41,7 @@
 %type<iValue> INTEGER_EXPRESSION
 %type<bValue> BOOLEAN_EXPRESSION BOOLEAN_EQUATION
 %type<strValue> PLUS MINUS MUL DIV MOD
+%type<strValue> ARRAY_LITERAL LVALUE_ELEMENT
 
 %left OR
 %left AND
@@ -68,6 +69,8 @@ S : DECLARATIONS OPEN_WALLET MAIN CLOSE_WALLET {
 
 FUNCTION_DECLARATION : TYPE ID '(' DECL_PARAMETER_SEQUENCE ')'
 
+FUNCTION_DEFINITION : TYPE ID '(' DECL_PARAMETER_SEQUENCE ')' SCOPE
+
 DECL_PARAMETER_SEQUENCE : TYPE ID ',' DECL_PARAMETER_SEQUENCE
                         | TYPE ID 
 
@@ -86,6 +89,8 @@ CLASS_MEMBER : ACCESS_MODIFIER TYPE IDSEQUENCE ';'
              | ACCESS_MODIFIER FUNCTION_DECLARATION ';'
              | TYPE IDSEQUENCE ';'
              | FUNCTION_DECLARATION ';'
+             | FUNCTION_DEFINITION
+             | ACCESS_MODIFIER FUNCTION_DEFINITION
 
 ACCESS_MODIFIER : PRIVATE
                 | PUBLIC
@@ -140,6 +145,7 @@ DECLARATIONS :  DECLARATIONS_ELEMENT
 DECLARATIONS_ELEMENT : LINE_DECLARATION ';'
                      | FUNCTION_DECLARATION ';'
                      | CLASS_DEFINITION ';'
+                     | FUNCTION_DEFINITION
 
 
 /*             Scope Grammar              */
@@ -237,8 +243,11 @@ ELSE_STATEMENT : ELSE {
 
 MAIN : CODE_AREA 
 
+MUL_STATEMENTS : STATEMENT ';'
+               | STATEMENT ',' MUL_STATEMENTS
+
 CODE_AREA_ELEMENT : BLOCK 
-                  | STATEMENT ';'
+                  | MUL_STATEMENTS
                   | LINE_DECLARATION ';'
                   ;
 
@@ -254,26 +263,29 @@ STATEMENT :   ASSIGNMENT_STATEMENT
             | FUNCTION_CALL
             ;
 
-ASSIGNMENT_STATEMENT :  ID ACCESS ID '=' INTEGER_EXPRESSION|
-                        ID '=' INTEGER_EXPRESSION {
-                        if(validateStatement()) {
-                            std::string symbol($1);
-                            SymTable * symTable = findSymTable(symbol);
-                            if(isSymbolValid(symbol, "int"))
-                            {
-                                value val = symTable->getSymbolValue(symbol);
-                                symTable->updateSymbol(symbol, $3);
-                            }
-                            else {
-                                if(globalAreaOn) 
-                                    unSymbols.push_back({$1, $3});
-                                else 
-                                    yyerror(std::string("Undeclared variable ") + std::string($1));
-                            }
+LVALUE_ELEMENT : ID 
+               | ARRAY_LITERAL
+
+ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
+                        | LVALUE_ELEMENT '=' INTEGER_EXPRESSION {
+                                if(validateStatement()) {
+                                    std::string symbol($1);
+                                    SymTable * symTable = findSymTable(symbol);
+                                    if(isSymbolValid(symbol, "int"))
+                                    {
+                                        value val = symTable->getSymbolValue(symbol);
+                                        symTable->updateSymbol(symbol, $3);
+                                    }
+                                    else {
+                                        if(globalAreaOn) 
+                                            unSymbols.push_back({$1, $3});
+                                        else 
+                                            yyerror(std::string("Undeclared variable ") + std::string($1));
+                                    }
+                         }
                     }
-                 }
-                    |   ID ACCESS ID '=' BOOLEAN_EXPRESSION
-                    |   ID '=' BOOLEAN_EXPRESSION {
+                    |   LVALUE_ELEMENT ACCESS ID '=' BOOLEAN_EXPRESSION
+                    |   LVALUE_ELEMENT '=' BOOLEAN_EXPRESSION {
                             if(validateStatement()) {
                                 std::string symbol($1);
                                 SymTable * symTable = findSymTable(symbol);
@@ -290,17 +302,19 @@ ASSIGNMENT_STATEMENT :  ID ACCESS ID '=' INTEGER_EXPRESSION|
                                 }
                         }
                     }
-                    | ID ACCESS ID '=' ARRAY_LITERAL
-                    | ID '=' ARRAY_LITERAL
-                    | ID ACCESS ID '=' FUNCTION_CALL
-                    | ID '=' FUNCTION_CALL
-                    | ID ACCESS ID OPERATOR '=' INTEGER_EXPRESSION
-                    | ID OPERATOR '=' INTEGER_EXPRESSION
-                    | ID ACCESS ID INCR
-                    | ID INCR
-                    | ID ACCESS ID DECR
-                    | ID DECR
+                    | LVALUE_ELEMENT ACCESS ID '=' ARRAY_DECLARATION
+                    | LVALUE_ELEMENT '=' ARRAY_DECLARATION
+                    | LVALUE_ELEMENT ACCESS ID '=' FUNCTION_CALL
+                    | LVALUE_ELEMENT '=' FUNCTION_CALL
+                    | LVALUE_ELEMENT ACCESS ID OPERATOR '=' INTEGER_EXPRESSION
+                    | LVALUE_ELEMENT OPERATOR '=' INTEGER_EXPRESSION
+                    | LVALUE_ELEMENT ACCESS ID INCR
+                    | LVALUE_ELEMENT INCR
+                    | LVALUE_ELEMENT ACCESS ID DECR
+                    | LVALUE_ELEMENT DECR
+                    | LVALUE_ELEMENT '=' STRING_LITERAL
 /* Print Statement Grammar  */
+
 
 PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
                     if(validateStatement()) 
@@ -314,6 +328,9 @@ PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
                         else std::cout << "false\n";
                     }
                 }
+                | PRINT '(' FUNCTION_CALL ')' {
+                    std::cout << 0 << '\n';
+                }
 
 /*  Type Of Statement Grammar  */
 
@@ -322,6 +339,9 @@ TYPE_OF_STATEMENT : TYPEOF '(' INTEGER_EXPRESSION ')' {
                 }
                 |   TYPEOF '(' BOOLEAN_EXPRESSION ')' {
                     std::cout << "bool\n";
+                }
+                | TYPEOF '(' FUNCTION_CALL ')' {
+                    std::cout << "function call\n";
                 }
 
 /*         RValue Expressions Area           */
@@ -376,13 +396,13 @@ BOOLEAN_EQUATION : INTEGER_EXPRESSION EQ INTEGER_EXPRESSION {
 
 /*  Integer Expression Grammar      */
 
-INTEGER_EXPRESSION :ID ACCESS ID {
+INTEGER_EXPRESSION :LVALUE_ELEMENT ACCESS LVALUE_ELEMENT {
                     $$ = 0;
                 }
-                   |ID ACCESS FUNCTION_CALL {
+                   | LVALUE_ELEMENT ACCESS FUNCTION_CALL {
                         $$ = 0;
                    }
-            | ID{
+            | LVALUE_ELEMENT{
                 SymTable * symTable = findSymTable(std::string($1));
                 if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
                 {
@@ -395,32 +415,25 @@ INTEGER_EXPRESSION :ID ACCESS ID {
                     $$ = 0;
                 }
             }
-            |
-            INTEGER {
+            | INTEGER {
                 $$ = $1;
             }
-            |
-            INTEGER_EXPRESSION PLUS INTEGER_EXPRESSION {
+            | INTEGER_EXPRESSION PLUS INTEGER_EXPRESSION {
                 $$ = $1 + $3;
             }
-            |
-            INTEGER_EXPRESSION MUL INTEGER_EXPRESSION {
+            | INTEGER_EXPRESSION MUL INTEGER_EXPRESSION {
                 $$ = $1 * $3;
             }
-            |
-            INTEGER_EXPRESSION MINUS INTEGER_EXPRESSION {
+            | INTEGER_EXPRESSION MINUS INTEGER_EXPRESSION {
                 $$ = $1 - $3;
             }
-            |
-            INTEGER_EXPRESSION MOD INTEGER_EXPRESSION {
+            | INTEGER_EXPRESSION MOD INTEGER_EXPRESSION {
                 $$ = $1 % $3;
             }
-            |
-            INTEGER_EXPRESSION DIV INTEGER_EXPRESSION {
+            | INTEGER_EXPRESSION DIV INTEGER_EXPRESSION {
                 $$ = $1 / $3;
             }
-            |
-            '(' INTEGER_EXPRESSION ')' {
+            | '(' INTEGER_EXPRESSION ')' {
                 $$ = $2;
             }
             ;
@@ -437,9 +450,14 @@ PARAMETER : INTEGER_EXPRESSION
 
 /* Array Grammar */
 
-ARRAY_LITERAL : '[' INTEGER_EXPRESSION ';' INTEGER_EXPRESSION ']'
-              | '[' INTEGER_EXPRESSION ']'
-              ;
+ARRAY_LITERAL : ID '[' INTEGER_EXPRESSION ']' {
+        $$ = $1;
+}
+
+ARRAY_DECLARATION : '[' INTEGER_EXPRESSION ';' INTEGER_EXPRESSION ']'
+                  | '[' INTEGER_EXPRESSION ']'
+                  ;
+
 
 %%
 
