@@ -18,19 +18,15 @@ specialCharacters [_|-]
 "false" {yylval.bValue = false; return BOOLEAN_LITERAL;}
 "\""[^\\]*"\"" {yylval.strValue = strdup(yytext); return STRING_LITERAL;}
 "class"   { 
-    printf("Matched CLASS token\n");
     return CLASS; 
 }
 "private" { 
-    printf("Matched PRIVATE token\n");
     return PRIVATE; 
 }
 "public"  { 
-    printf("Matched PUBLIC token\n");
     return PUBLIC; 
 }
 "protected" { 
-    printf("Matched PROTECTED token\n");
     return PROTECTED; 
 }
 "&&" {return AND;}
@@ -48,21 +44,21 @@ specialCharacters [_|-]
 "else" {return ELSE;}
 "while" {return WHILE;}
 "for" {return FOR;}
-"{" {return SCOPE_START;}
-"}" {return SCOPE_END;}
+"{" {  return SCOPE_START;}
+"}" {  return SCOPE_END;}
+"++" {return INCR;}
+"--" {return DECR;}
 "+" {yylval.strValue = strdup(yytext); return PLUS;}
 "-" {yylval.strValue = strdup(yytext); return MINUS;}
 "*" {yylval.strValue = strdup(yytext); return MUL;}
 "/" {yylval.strValue = strdup(yytext); return DIV;}
 "%" {yylval.strValue = strdup(yytext);return MOD;}
-"++" {return INCR;}
-"--" {return DECR;}
-
+"." {return ACCESS;}
 
 {letter}({letter}|{digit}|{specialCharacters})* {yylval.strValue=strdup(yytext); return ID;}
 {digit}+ {yylval.iValue = atoi(yytext); return INTEGER;}
 \n {yylineno++;}
-[-+;*/,=\(\)%] {return yytext[0];}
+[-+;*/,=\(\)%\[\]] {return yytext[0];}
 <<EOF>> { return 0; } 
 [ \t]+ {}
 . {}

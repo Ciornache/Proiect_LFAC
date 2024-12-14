@@ -1,16 +1,21 @@
-class Base 
-{ 
-
+public class marciuc{
+int a;
+int b,c=11,d=3;
+char f(int x);
 };
 int f(int a, int b, int c);
 int a = 4, b = 10;
 int c = 10;
 int r;
+int p = [10; 20];
+marciuc m;
 OPEN WALLET
 a = 5;
 print(a);
+print(m.l);
 a = a + 5;
 print(a);
+f(a);
 if a != b
 {
     print(2 + 67);

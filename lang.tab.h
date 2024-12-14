@@ -67,28 +67,29 @@ extern int yydebug;
     PUBLIC = 268,                  /* PUBLIC  */
     PROTECTED = 269,               /* PROTECTED  */
     CLASS = 270,                   /* CLASS  */
-    AND = 271,                     /* AND  */
-    OR = 272,                      /* OR  */
-    EQ = 273,                      /* EQ  */
-    NEQ = 274,                     /* NEQ  */
-    LT = 275,                      /* LT  */
-    LEQ = 276,                     /* LEQ  */
-    HT = 277,                      /* HT  */
-    HEQ = 278,                     /* HEQ  */
-    IF = 279,                      /* IF  */
-    ELSE = 280,                    /* ELSE  */
-    ELSE_IF = 281,                 /* ELSE_IF  */
-    WHILE = 282,                   /* WHILE  */
-    FOR = 283,                     /* FOR  */
-    SCOPE_START = 284,             /* SCOPE_START  */
-    SCOPE_END = 285,               /* SCOPE_END  */
-    PLUS = 286,                    /* PLUS  */
-    MINUS = 287,                   /* MINUS  */
-    MUL = 288,                     /* MUL  */
-    DIV = 289,                     /* DIV  */
-    MOD = 290,                     /* MOD  */
-    INCR = 291,                    /* INCR  */
-    DECR = 292                     /* DECR  */
+    ACCESS = 271,                  /* ACCESS  */
+    AND = 272,                     /* AND  */
+    OR = 273,                      /* OR  */
+    EQ = 274,                      /* EQ  */
+    NEQ = 275,                     /* NEQ  */
+    LT = 276,                      /* LT  */
+    LEQ = 277,                     /* LEQ  */
+    HT = 278,                      /* HT  */
+    HEQ = 279,                     /* HEQ  */
+    IF = 280,                      /* IF  */
+    ELSE = 281,                    /* ELSE  */
+    ELSE_IF = 282,                 /* ELSE_IF  */
+    WHILE = 283,                   /* WHILE  */
+    FOR = 284,                     /* FOR  */
+    SCOPE_START = 285,             /* SCOPE_START  */
+    SCOPE_END = 286,               /* SCOPE_END  */
+    PLUS = 287,                    /* PLUS  */
+    MINUS = 288,                   /* MINUS  */
+    MUL = 289,                     /* MUL  */
+    DIV = 290,                     /* DIV  */
+    MOD = 291,                     /* MOD  */
+    INCR = 292,                    /* INCR  */
+    DECR = 293                     /* DECR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -103,7 +104,7 @@ union YYSTYPE
     int iValue;
     bool bValue;
 
-#line 107 "lang.tab.h"
+#line 108 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

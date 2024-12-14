@@ -30,7 +30,7 @@
 %token OPEN_WALLET CLOSE_WALLET 
 %token PRINT TYPEOF
 %token PRIVATE PUBLIC PROTECTED
-%token CLASS
+%token CLASS ACCESS
 %token AND
 %token OR
 %token EQ NEQ LT LEQ HT HEQ
@@ -74,15 +74,25 @@ DECL_PARAMETER_SEQUENCE : TYPE ID ',' DECL_PARAMETER_SEQUENCE
 
 /*   Class Declaration Grammar       */
 
-CLASS_DEFINITION : ACCESS_MODIFIER CLASS ID SCOPE_START CLASS_MEMBER_LIST SCOPE_END ;
+CLASS_DEFINITION : ACCESS_MODIFIER CLASS ID SCOPE_START CLASS_MEMBER_LIST SCOPE_END
+                 | ACCESS_MODIFIER CLASS ID SCOPE_START SCOPE_END 
+                 | CLASS ID SCOPE_START SCOPE_END
+                 | CLASS ID SCOPE_START CLASS_MEMBER_LIST SCOPE_END
 
-CLASS_MEMBER_LIST : /* empty */ ;
+CLASS_MEMBER_LIST : CLASS_MEMBER_LIST CLASS_MEMBER
+                  | CLASS_MEMBER
+                  ;
+CLASS_MEMBER : ACCESS_MODIFIER TYPE IDSEQUENCE ';'
+             | ACCESS_MODIFIER FUNCTION_DECLARATION ';'
+             | TYPE IDSEQUENCE ';'
+             | FUNCTION_DECLARATION ';'
 
 ACCESS_MODIFIER : PRIVATE
                 | PUBLIC
                 | PROTECTED
-                |
                 ;
+
+/* Global Variables Declaration Grammar */
 
 /* Global Variables Declaration Grammar */
 
@@ -109,6 +119,8 @@ LINE_DECLARATION : TYPE IDSEQUENCE {
         }
         unSymbols.clear();
 }
+| ID ID;
+
 
 IDSEQUENCE : ID_SEQUENCE_ELEMENT 
            | ID_SEQUENCE_ELEMENT ',' IDSEQUENCE  
@@ -239,9 +251,11 @@ CODE_AREA : CODE_AREA_ELEMENT
 STATEMENT :   ASSIGNMENT_STATEMENT
             | PRINT_STATEMENT
             | TYPE_OF_STATEMENT
+            | FUNCTION_CALL
             ;
 
-ASSIGNMENT_STATEMENT : ID '=' INTEGER_EXPRESSION {
+ASSIGNMENT_STATEMENT :  ID ACCESS ID '=' INTEGER_EXPRESSION|
+                        ID '=' INTEGER_EXPRESSION {
                         if(validateStatement()) {
                             std::string symbol($1);
                             SymTable * symTable = findSymTable(symbol);
@@ -258,6 +272,7 @@ ASSIGNMENT_STATEMENT : ID '=' INTEGER_EXPRESSION {
                             }
                     }
                  }
+                    |   ID ACCESS ID '=' BOOLEAN_EXPRESSION
                     |   ID '=' BOOLEAN_EXPRESSION {
                             if(validateStatement()) {
                                 std::string symbol($1);
@@ -275,12 +290,16 @@ ASSIGNMENT_STATEMENT : ID '=' INTEGER_EXPRESSION {
                                 }
                         }
                     }
+                    | ID ACCESS ID '=' ARRAY_LITERAL
                     | ID '=' ARRAY_LITERAL
+                    | ID ACCESS ID '=' FUNCTION_CALL
                     | ID '=' FUNCTION_CALL
+                    | ID ACCESS ID OPERATOR '=' INTEGER_EXPRESSION
                     | ID OPERATOR '=' INTEGER_EXPRESSION
+                    | ID ACCESS ID INCR
                     | ID INCR
+                    | ID ACCESS ID DECR
                     | ID DECR
-
 /* Print Statement Grammar  */
 
 PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
@@ -357,7 +376,13 @@ BOOLEAN_EQUATION : INTEGER_EXPRESSION EQ INTEGER_EXPRESSION {
 
 /*  Integer Expression Grammar      */
 
-INTEGER_EXPRESSION : ID {
+INTEGER_EXPRESSION :ID ACCESS ID {
+                    $$ = 0;
+                }
+                   |ID ACCESS FUNCTION_CALL {
+                        $$ = 0;
+                   }
+            | ID{
                 SymTable * symTable = findSymTable(std::string($1));
                 if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
                 {
