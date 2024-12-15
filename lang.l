@@ -9,6 +9,7 @@
 letter [a-zA-Z]
 digit [0-9]
 specialCharacters [_]
+commentChr [/]
 
 %%
 "OPEN WALLET" {return OPEN_WALLET;}
@@ -16,7 +17,7 @@ specialCharacters [_]
 "int"|"float"|"char"|"compl"|"bool"|"string" {yylval.strValue = strdup(yytext); return TYPE;}
 "true" {yylval.bValue = true; return BOOLEAN_LITERAL;}
 "false" {yylval.bValue = false; return BOOLEAN_LITERAL;}
-"\""[^\\]*"\"" {yylval.strValue = strdup(yytext); return STRING_LITERAL;}
+"\""[^"]*"\"" {yylval.strValue = strdup(yytext); return STRING_LITERAL;}
 "class"   { 
     return CLASS; 
 }
@@ -54,9 +55,12 @@ specialCharacters [_]
 "/" {yylval.strValue = strdup(yytext); return DIV;}
 "%" {yylval.strValue = strdup(yytext);return MOD;}
 "." {return ACCESS;}
+"return" {return RETURN;}
+
 {letter}({letter}|{digit}|{specialCharacters})* {yylval.strValue=strdup(yytext); return ID;}
 {digit}+ {yylval.iValue = atoi(yytext); return INTEGER;}
 \n {yylineno++;}
+{commentChr}{commentChr}[^\n]*[\n] { }
 [;,=\(\)\[\]] {return yytext[0];}
 <<EOF>> { return 0; } 
 [ \t]+ {}

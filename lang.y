@@ -37,8 +37,9 @@
 %token IF ELSE ELSE_IF WHILE FOR
 %token SCOPE_START SCOPE_END 
 %token PLUS MINUS MUL DIV MOD INCR DECR
+%token RETURN 
 
-%type<iValue> INTEGER_EXPRESSION
+%type<iValue> INTEGER_EXPRESSION FUNCTION_CALL
 %type<bValue> BOOLEAN_EXPRESSION BOOLEAN_EQUATION
 %type<strValue> PLUS MINUS MUL DIV MOD
 %type<strValue> ARRAY_LITERAL LVALUE_ELEMENT
@@ -73,6 +74,7 @@ FUNCTION_DEFINITION : TYPE ID '(' DECL_PARAMETER_SEQUENCE ')' SCOPE
 
 DECL_PARAMETER_SEQUENCE : TYPE ID ',' DECL_PARAMETER_SEQUENCE
                         | TYPE ID 
+                        | /* empty */
 
 
 /*   Class Declaration Grammar       */
@@ -229,7 +231,8 @@ ELSE_IF_BLOCK : ELSE_IF_STATEMENT SCOPE
 ELSE_BLOCK : ELSE_STATEMENT SCOPE
 
 ELSE_IF_STATEMENT : ELSE_IF  BOOLEAN_EXPRESSION  {
-    if($2 && !ifController.second)
+    if(ifController.second) ifController.second = -1;
+    if($2 && ifController.second == 0)
         ifController.second = 1;
 }
 
@@ -249,6 +252,7 @@ MUL_STATEMENTS : STATEMENT ';'
 CODE_AREA_ELEMENT : BLOCK 
                   | MUL_STATEMENTS
                   | LINE_DECLARATION ';'
+                  | SCOPE
                   ;
 
 CODE_AREA : CODE_AREA_ELEMENT 
@@ -261,10 +265,14 @@ STATEMENT :   ASSIGNMENT_STATEMENT
             | PRINT_STATEMENT
             | TYPE_OF_STATEMENT
             | FUNCTION_CALL
+            | RETURN_STATEMENT 
+            | LVALUE_ELEMENT ACCESS FUNCTION_CALL
             ;
 
 LVALUE_ELEMENT : ID 
                | ARRAY_LITERAL
+
+RETURN_STATEMENT : RETURN INTEGER_EXPRESSION
 
 ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
                         | LVALUE_ELEMENT '=' INTEGER_EXPRESSION {
@@ -304,15 +312,15 @@ ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
                     }
                     | LVALUE_ELEMENT ACCESS ID '=' ARRAY_DECLARATION
                     | LVALUE_ELEMENT '=' ARRAY_DECLARATION
-                    | LVALUE_ELEMENT ACCESS ID '=' FUNCTION_CALL
-                    | LVALUE_ELEMENT '=' FUNCTION_CALL
                     | LVALUE_ELEMENT ACCESS ID OPERATOR '=' INTEGER_EXPRESSION
                     | LVALUE_ELEMENT OPERATOR '=' INTEGER_EXPRESSION
                     | LVALUE_ELEMENT ACCESS ID INCR
                     | LVALUE_ELEMENT INCR
                     | LVALUE_ELEMENT ACCESS ID DECR
                     | LVALUE_ELEMENT DECR
-                    | LVALUE_ELEMENT '=' STRING_LITERAL
+                    | LVALUE_ELEMENT '=' STRING_LITERAL {
+                        std::cout << "HERE!\n";
+                    }
 /* Print Statement Grammar  */
 
 
@@ -328,20 +336,23 @@ PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
                         else std::cout << "false\n";
                     }
                 }
-                | PRINT '(' FUNCTION_CALL ')' {
-                    std::cout << 0 << '\n';
+                | PRINT '(' STRING_LITERAL ')' {
+                    if(validateStatement()) {
+                        std::cout << $3 << '\n';
+                    }
                 }
 
 /*  Type Of Statement Grammar  */
 
 TYPE_OF_STATEMENT : TYPEOF '(' INTEGER_EXPRESSION ')' {
-                    std::cout << "integer\n";
+                    if(validateStatement()) {
+                        std::cout << "integer\n";
+                    }
                 }
                 |   TYPEOF '(' BOOLEAN_EXPRESSION ')' {
-                    std::cout << "bool\n";
-                }
-                | TYPEOF '(' FUNCTION_CALL ')' {
-                    std::cout << "function call\n";
+                    if(validateStatement()) {
+                        std::cout << "bool\n";
+                    }
                 }
 
 /*         RValue Expressions Area           */
@@ -362,6 +373,9 @@ BOOLEAN_EXPRESSION :  BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION {
                     }
                     | BOOLEAN_EQUATION {
                         $$ = $1;
+                    }
+                    | '(' BOOLEAN_EXPRESSION ')' {
+                        $$ = $2;
                     }
                     ;
 
@@ -415,6 +429,9 @@ INTEGER_EXPRESSION :LVALUE_ELEMENT ACCESS LVALUE_ELEMENT {
                     $$ = 0;
                 }
             }
+            | FUNCTION_CALL {
+                $$ = 0;
+            }
             | INTEGER {
                 $$ = $1;
             }
@@ -440,13 +457,15 @@ INTEGER_EXPRESSION :LVALUE_ELEMENT ACCESS LVALUE_ELEMENT {
 
 /*  Function Call Grammar */
 
-FUNCTION_CALL : ID '(' PARAMETER_LIST ')'
+FUNCTION_CALL : ID '(' PARAMETER_LIST ')' {
+    $$ = 0;
+}
 
 PARAMETER_LIST : PARAMETER
                | PARAMETER ',' PARAMETER_LIST
+               | /* empty */
 
 PARAMETER : INTEGER_EXPRESSION
-          | FUNCTION_CALL
 
 /* Array Grammar */
 

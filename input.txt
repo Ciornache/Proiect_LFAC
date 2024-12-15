@@ -45,7 +45,12 @@ OPEN WALLET
         print(results[i]);
     }
 
-    if (globalX < globalY && isActive) {
+    Calculator calc;
+    calc.add(1, 2, 3);
+    print(calc.a);
+    int f = factorial(10);
+    
+    if (globalX < globalY && isActive != 0) {
         print("Condition is true");
     } else if (globalX == globalY) {
         print("Global variables are equal");

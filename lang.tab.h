@@ -89,7 +89,8 @@ extern int yydebug;
     DIV = 290,                     /* DIV  */
     MOD = 291,                     /* MOD  */
     INCR = 292,                    /* INCR  */
-    DECR = 293                     /* DECR  */
+    DECR = 293,                    /* DECR  */
+    RETURN = 294                   /* RETURN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -104,7 +105,7 @@ union YYSTYPE
     int iValue;
     bool bValue;
 
-#line 108 "lang.tab.h"
+#line 109 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
