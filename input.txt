@@ -1,14 +1,26 @@
 int globalX = 5, globalY = 10;
 bool isActive = true;
+string s = "nice book";
 
 public class Calculator {
-    private int a, b;
+    private int a = 20, b;
     public int add() {
         return a + b;
     }
     protected int multiply() {
         return a * b;
     }
+
+    private string randomFunction(int a, int c, int b) {
+        return "ham";
+    }
+
+    bool ceva(bool ok) {
+        return true;
+    }
+
+    float f();
+
 };
 
 int factorial(int n) {
@@ -19,10 +31,9 @@ int factorial(int n) {
     }
 }
 
-int results = [10; 20];
+int results = [10; 20], vector2 = [15;100];
 
 OPEN WALLET
-    print(10);
     {
         int localX = 20, localY = 30;
         print(localX + localY); 
@@ -35,7 +46,10 @@ OPEN WALLET
 
         print(sum);        // Print the sum
         print(product);    // Print the product
-    }
+        typeof(sum);       // Print the type of sum
+        
+        }    
+
 
     for (int i = 0; i < 10; i = i + 1) {
         results[i] = factorial(i);
@@ -44,10 +58,17 @@ OPEN WALLET
     for (int i = 0; i < 10; i = i + 1) {
         print(results[i]);
     }
+    
+    int n = 20;
+
+    for(int d = 1, d2 = 2 * 2 + 3; d * d <= n && d2 <= 100; d2 -= 10, d *= 1000, d = d + d2) {
+        print("Buna Dimineata");
+    }
 
     Calculator calc;
-    calc.add(1, 2, 3);
-    print(calc.a);
+    calc.add();
+    calc.a = 30; calc.b = 69;
+    print(calc.a); print(calc.b);
     int f = factorial(10);
     
     if (globalX < globalY && isActive != 0) {

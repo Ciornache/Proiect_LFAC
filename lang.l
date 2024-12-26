@@ -22,12 +22,15 @@ commentChr [/]
     return CLASS; 
 }
 "private" { 
+    yylval.strValue = strdup(yytext);
     return PRIVATE; 
 }
 "public"  { 
+    yylval.strValue = strdup(yytext);
     return PUBLIC; 
 }
-"protected" { 
+"protected" {
+    yylval.strValue = strdup(yytext); 
     return PROTECTED; 
 }
 "&&" {return AND;}
