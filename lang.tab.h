@@ -39,7 +39,7 @@
 # define YY_YY_LANG_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -70,27 +70,19 @@ extern int yydebug;
     ACCESS = 271,                  /* ACCESS  */
     AND = 272,                     /* AND  */
     OR = 273,                      /* OR  */
-    EQ = 274,                      /* EQ  */
-    NEQ = 275,                     /* NEQ  */
-    LT = 276,                      /* LT  */
-    LEQ = 277,                     /* LEQ  */
-    HT = 278,                      /* HT  */
-    HEQ = 279,                     /* HEQ  */
-    IF = 280,                      /* IF  */
-    ELSE = 281,                    /* ELSE  */
-    ELSE_IF = 282,                 /* ELSE_IF  */
-    WHILE = 283,                   /* WHILE  */
-    FOR = 284,                     /* FOR  */
-    SCOPE_START = 285,             /* SCOPE_START  */
-    SCOPE_END = 286,               /* SCOPE_END  */
-    PLUS = 287,                    /* PLUS  */
-    MINUS = 288,                   /* MINUS  */
-    MUL = 289,                     /* MUL  */
-    DIV = 290,                     /* DIV  */
-    MOD = 291,                     /* MOD  */
-    INCR = 292,                    /* INCR  */
-    DECR = 293,                    /* DECR  */
-    RETURN = 294                   /* RETURN  */
+    IF = 274,                      /* IF  */
+    ELSE = 275,                    /* ELSE  */
+    ELSE_IF = 276,                 /* ELSE_IF  */
+    WHILE = 277,                   /* WHILE  */
+    FOR = 278,                     /* FOR  */
+    SCOPE_START = 279,             /* SCOPE_START  */
+    SCOPE_END = 280,               /* SCOPE_END  */
+    INCR = 281,                    /* INCR  */
+    DECR = 282,                    /* DECR  */
+    RETURN = 283,                  /* RETURN  */
+    BOOL_OPERATOR = 284,           /* BOOL_OPERATOR  */
+    ADD_OPERATOR = 285,            /* ADD_OPERATOR  */
+    MUL_OPERATOR = 286             /* MUL_OPERATOR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -99,13 +91,14 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 19 "lang.y"
+#line 22 "lang.y"
 
     char * strValue;
     int iValue;
     bool bValue;
+    class arb* tree;
 
-#line 109 "lang.tab.h"
+#line 102 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

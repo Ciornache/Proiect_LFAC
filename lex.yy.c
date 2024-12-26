@@ -365,20 +365,20 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[145] =
     {   0,
-        0,    0,   45,   43,   42,   39,   43,   43,   34,   43,
-       41,   32,   30,   31,   35,   33,   38,   16,   41,   15,
+        0,    0,   45,   43,   42,   39,   43,   43,   23,   43,
+       41,   21,   19,   20,   35,   22,   38,   16,   41,   15,
        37,   37,   37,   37,   37,   37,   37,   37,   37,   37,
-       37,   37,   37,   26,   43,   27,   42,   13,    0,    6,
-       11,   28,   29,    0,   38,   17,   14,   18,   37,   37,
-       37,   37,   37,   37,   37,   37,   37,   37,   37,   21,
+       37,   37,   37,   31,   43,   32,   42,   13,    0,    6,
+       11,   33,   34,    0,   38,   17,   14,   18,   37,   37,
+       37,   37,   37,   37,   37,   37,   37,   37,   37,   26,
        37,   37,   37,   37,   37,   37,   37,   37,   12,    0,
        40,   37,   37,   37,   37,   37,   37,   37,   37,   37,
-       25,    3,   37,   37,   37,   37,   37,   37,   37,   37,
-       37,   37,   37,   37,   23,   37,   37,   37,   37,   37,
+       30,    3,   37,   37,   37,   37,   37,   37,   37,   37,
+       37,   37,   37,   37,   28,   37,   37,   37,   37,   37,
 
        37,   37,   37,    4,   37,   37,   37,    0,    7,    0,
-        5,   20,   37,   37,   37,   37,   37,   37,   24,    0,
-        0,    0,   37,   37,    9,   36,   19,    0,    0,   22,
+        5,   25,   37,   37,   37,   37,   37,   37,   29,    0,
+        0,    0,   37,   37,    9,   36,   24,    0,    0,   27,
         8,   37,    0,    0,   37,    0,    0,   10,    0,    0,
         0,    1,    2,    0
     } ;
@@ -855,207 +855,213 @@ case 7:
 YY_RULE_SETUP
 #line 21 "lang.l"
 { 
+    printf("I found token class\n");
     return CLASS; 
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 24 "lang.l"
+#line 25 "lang.l"
 { 
+        printf("I found token private\n");
     return PRIVATE; 
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 27 "lang.l"
+#line 29 "lang.l"
 { 
+        printf("I found token public\n");
+
     return PUBLIC; 
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 30 "lang.l"
+#line 34 "lang.l"
 { 
+        printf("I found token protected\n");
     return PROTECTED; 
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 33 "lang.l"
-{return AND;}
+#line 38 "lang.l"
+{return AND;printf("I found operator :&&\n");}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 34 "lang.l"
-{return OR;}
+#line 39 "lang.l"
+{return OR; printf("I found operator : ||\n");}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 35 "lang.l"
-{return NEQ;}
+#line 40 "lang.l"
+{ cout << "Found relational operator: " << yytext << endl; yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 36 "lang.l"
-{return EQ;}
+#line 41 "lang.l"
+{ cout << "Found relational operator: " << yytext << endl; yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 37 "lang.l"
-{return HT;}
+#line 42 "lang.l"
+{ cout << "Found relational operator: " << yytext << endl; yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 38 "lang.l"
-{return LT;}
+#line 43 "lang.l"
+{ cout << "Found relational operator: " << yytext << endl; yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 39 "lang.l"
-{return LEQ;}
+#line 44 "lang.l"
+{ cout << "Found relational operator: " << yytext << endl; yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 40 "lang.l"
-{return HEQ;}
+#line 45 "lang.l"
+{ cout << "Found relational operator: " << yytext << endl; yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 41 "lang.l"
-{return TYPEOF;}
+#line 46 "lang.l"
+{ cout << "Found arithmetic operator: " << yytext << endl; yylval.strValue = strdup(yytext); return ADD_OPERATOR; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 42 "lang.l"
-{return PRINT;}
+#line 47 "lang.l"
+{ cout << "Found arithmetic operator: " << yytext << endl; yylval.strValue = strdup(yytext); return ADD_OPERATOR; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 43 "lang.l"
-{return IF;}
+#line 48 "lang.l"
+{ cout << "Found arithmetic operator: " << yytext << endl; yylval.strValue = strdup(yytext); return MUL_OPERATOR; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 44 "lang.l"
-{return ELSE_IF;}
+#line 49 "lang.l"
+{ cout << "Found arithmetic operator: " << yytext << endl; yylval.strValue = strdup(yytext); return MUL_OPERATOR; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 45 "lang.l"
-{return ELSE;}
+#line 50 "lang.l"
+{ cout << "Found arithmetic operator: " << yytext << endl; yylval.strValue = strdup(yytext); return MUL_OPERATOR; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 46 "lang.l"
-{return WHILE;}
+#line 51 "lang.l"
+{return TYPEOF;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 47 "lang.l"
-{return FOR;}
+#line 52 "lang.l"
+{return PRINT;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 48 "lang.l"
-{  return SCOPE_START;}
+#line 53 "lang.l"
+{return IF;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 49 "lang.l"
-{  return SCOPE_END;}
+#line 54 "lang.l"
+{return ELSE_IF;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 50 "lang.l"
-{return INCR;}
+#line 55 "lang.l"
+{return ELSE;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 51 "lang.l"
-{return DECR;}
+#line 56 "lang.l"
+{return WHILE;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 52 "lang.l"
-{yylval.strValue = strdup(yytext); return PLUS;}
+#line 57 "lang.l"
+{return FOR;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 53 "lang.l"
-{yylval.strValue = strdup(yytext); return MINUS;}
+#line 58 "lang.l"
+{  return SCOPE_START;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 54 "lang.l"
-{yylval.strValue = strdup(yytext); return MUL;}
+#line 59 "lang.l"
+{  return SCOPE_END;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 55 "lang.l"
-{yylval.strValue = strdup(yytext); return DIV;}
+#line 60 "lang.l"
+{return INCR;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 56 "lang.l"
-{yylval.strValue = strdup(yytext);return MOD;}
+#line 61 "lang.l"
+{return DECR;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 57 "lang.l"
+#line 62 "lang.l"
 {return ACCESS;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 58 "lang.l"
-{return RETURN;}
+#line 63 "lang.l"
+{printf("FOUND RETURN\n");return RETURN;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 60 "lang.l"
-{yylval.strValue=strdup(yytext); return ID;}
+#line 65 "lang.l"
+{yylval.strValue=strdup(yytext); printf("Found ID:%s \n"
+ ,yytext);return ID;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 61 "lang.l"
+#line 67 "lang.l"
 {yylval.iValue = atoi(yytext); return INTEGER;}
 	YY_BREAK
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 62 "lang.l"
+#line 68 "lang.l"
 {yylineno++;}
 	YY_BREAK
 case 40:
 /* rule 40 can match eol */
 YY_RULE_SETUP
-#line 63 "lang.l"
+#line 69 "lang.l"
 { }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 64 "lang.l"
+#line 70 "lang.l"
 {return yytext[0];}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 65 "lang.l"
+#line 71 "lang.l"
 { return 0; } 
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 66 "lang.l"
+#line 72 "lang.l"
 {}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 67 "lang.l"
+#line 73 "lang.l"
 {}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 68 "lang.l"
+#line 74 "lang.l"
 ECHO;
 	YY_BREAK
-#line 1059 "lex.yy.c"
+#line 1065 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2058,5 +2064,5 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 68 "lang.l"
+#line 74 "lang.l"
 

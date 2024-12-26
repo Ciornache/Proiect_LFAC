@@ -1,5 +1,7 @@
 %{
     #include "symtable.h"
+    #include "arb.h"
+    #include <string>
     using namespace std;
     extern int yylex();
     extern FILE * yyin;
@@ -16,10 +18,12 @@
     std::vector<SymTable*> symTables;
 
 %}
+%debug
 %union {
     char * strValue;
     int iValue;
     bool bValue;
+    class arb* tree;
 }
 
 %token<strValue> ID
@@ -33,22 +37,19 @@
 %token CLASS ACCESS
 %token AND
 %token OR
-%token EQ NEQ LT LEQ HT HEQ
 %token IF ELSE ELSE_IF WHILE FOR
 %token SCOPE_START SCOPE_END 
-%token PLUS MINUS MUL DIV MOD INCR DECR
+%token INCR DECR
 %token RETURN 
-
-%type<iValue> INTEGER_EXPRESSION FUNCTION_CALL
-%type<bValue> BOOLEAN_EXPRESSION BOOLEAN_EQUATION
-%type<strValue> PLUS MINUS MUL DIV MOD
+%token<strValue> BOOL_OPERATOR ADD_OPERATOR MUL_OPERATOR
+%type<tree> INTEGER_EXPRESSION FUNCTION_CALL BOOLEAN_EXPRESSION
 %type<strValue> ARRAY_LITERAL LVALUE_ELEMENT
 
 %left OR
 %left AND
-%left NEQ EQ LT LEQ HT HEQ
-%left PLUS MINUS
-%left MUL DIV MOD
+%left BOOL_OPERATOR
+%left ADD_OPERATOR
+%left MUL_OPERATOR
 
 %start S
 
@@ -218,7 +219,10 @@ IF_STRUCTURE : IF_STATEMENT SCOPE
 
 IF_STATEMENT : IF BOOLEAN_EXPRESSION {
     ifController = {true, 0};
-    if($2) 
+     ifController = {true, 0};
+    if($2->hasConflictingTypes()==true) 
+                        std::cout << "Conflicts here" << '\n';
+    if($2->getExpressionType()!="bool" && $2->getExpressionResult()!="0" || $2->getExpressionType()=="bool" && $2->getExpressionResult()=="true") 
         ifController.second = 1;
 }
 
@@ -232,7 +236,7 @@ ELSE_BLOCK : ELSE_STATEMENT SCOPE
 
 ELSE_IF_STATEMENT : ELSE_IF  BOOLEAN_EXPRESSION  {
     if(ifController.second) ifController.second = -1;
-    if($2 && ifController.second == 0)
+    if(($2->getExpressionType()!="bool" && $2->getExpressionResult()!="0" || $2->getExpressionType()=="bool" && $2->getExpressionResult()=="true") && ifController.second == 0)
         ifController.second = 1;
 }
 
@@ -272,7 +276,7 @@ STATEMENT :   ASSIGNMENT_STATEMENT
 LVALUE_ELEMENT : ID 
                | ARRAY_LITERAL
 
-RETURN_STATEMENT : RETURN INTEGER_EXPRESSION
+RETURN_STATEMENT : RETURN INTEGER_EXPRESSION | RETURN BOOLEAN_EXPRESSION
 
 ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
                         | LVALUE_ELEMENT '=' INTEGER_EXPRESSION {
@@ -282,11 +286,11 @@ ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
                                     if(isSymbolValid(symbol, "int"))
                                     {
                                         value val = symTable->getSymbolValue(symbol);
-                                        symTable->updateSymbol(symbol, $3);
+                                        symTable->updateSymbol(symbol, $3->getExpressionResult());
                                     }
                                     else {
                                         if(globalAreaOn) 
-                                            unSymbols.push_back({$1, $3});
+                                            unSymbols.push_back({$1, $3->getExpressionResult()});
                                         else 
                                             yyerror(std::string("Undeclared variable ") + std::string($1));
                                     }
@@ -294,17 +298,18 @@ ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
                     }
                     |   LVALUE_ELEMENT ACCESS ID '=' BOOLEAN_EXPRESSION
                     |   LVALUE_ELEMENT '=' BOOLEAN_EXPRESSION {
+                    
                             if(validateStatement()) {
                                 std::string symbol($1);
                                 SymTable * symTable = findSymTable(symbol);
                                 if(isSymbolValid(symbol, "bool"))
                                 {
                                     value val = symTable->getSymbolValue(symbol);
-                                    symTable->updateSymbol(symbol, $3);
+                                    symTable->updateSymbol(symbol, $3->getExpressionResult());
                                 }
                                 else {
                                     if(globalAreaOn) 
-                                        unSymbols.push_back({$1, value($3)});
+                                        unSymbols.push_back({$1, value($3->getExpressionResult())});
                                     else 
                                         yyerror(std::string("Undeclared variable ") + std::string($1));
                                 }
@@ -312,8 +317,10 @@ ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
                     }
                     | LVALUE_ELEMENT ACCESS ID '=' ARRAY_DECLARATION
                     | LVALUE_ELEMENT '=' ARRAY_DECLARATION
-                    | LVALUE_ELEMENT ACCESS ID OPERATOR '=' INTEGER_EXPRESSION
-                    | LVALUE_ELEMENT OPERATOR '=' INTEGER_EXPRESSION
+                    | LVALUE_ELEMENT ACCESS ID ADD_OPERATOR '=' INTEGER_EXPRESSION
+                    | LVALUE_ELEMENT ACCESS ID MUL_OPERATOR '=' INTEGER_EXPRESSION
+                    | LVALUE_ELEMENT ADD_OPERATOR '=' INTEGER_EXPRESSION
+                    | LVALUE_ELEMENT MUL_OPERATOR '=' INTEGER_EXPRESSION
                     | LVALUE_ELEMENT ACCESS ID INCR
                     | LVALUE_ELEMENT INCR
                     | LVALUE_ELEMENT ACCESS ID DECR
@@ -325,16 +332,12 @@ ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
 
 
 PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
-                    if(validateStatement()) 
-                        std::cout << $3 << '\n';
+                   if(validateStatement() && $3->hasConflictingTypes()==0) 
+                        std::cout << $3->getExpressionResult() << '\n';
                 }
                 | PRINT '(' BOOLEAN_EXPRESSION ')'{
-                    if(validateStatement()) 
-                    {
-                        if($3)
-                            std::cout << "true\n";
-                        else std::cout << "false\n";
-                    }
+                  if(validateStatement() && $3->hasConflictingTypes()==0) 
+                        std::cout << $3->getExpressionResult() << '\n';
                 }
                 | PRINT '(' STRING_LITERAL ')' {
                     if(validateStatement()) {
@@ -345,120 +348,79 @@ PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
 /*  Type Of Statement Grammar  */
 
 TYPE_OF_STATEMENT : TYPEOF '(' INTEGER_EXPRESSION ')' {
-                    if(validateStatement()) {
-                        std::cout << "integer\n";
-                    }
+                    if(validateStatement() && $3->hasConflictingTypes()==0) 
+                        std::cout << $3->getExpressionType() << '\n';
                 }
                 |   TYPEOF '(' BOOLEAN_EXPRESSION ')' {
-                    if(validateStatement()) {
-                        std::cout << "bool\n";
-                    }
+                    if(validateStatement() && $3->hasConflictingTypes()==0) 
+                        std::cout << $3->getExpressionType() << '\n';
                 }
 
 /*         RValue Expressions Area           */
 
-OPERATOR : PLUS 
-         | MINUS 
-         | MUL 
-         | DIV
-         | MOD
 
 /*  Boolean Expression Grammar  */
 
 BOOLEAN_EXPRESSION :  BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION {
-                            $$ = ($1 && $3);
+                        $$ = new arb("&&","",$1,$3);
                     }
                     | BOOLEAN_EXPRESSION OR BOOLEAN_EXPRESSION {
-                            $$ = ($1 || $3);
-                    }
-                    | BOOLEAN_EQUATION {
-                        $$ = $1;
+                        $$ = new arb("||","",$1,$3);
                     }
                     | '(' BOOLEAN_EXPRESSION ')' {
                         $$ = $2;
                     }
-                    ;
-
-BOOLEAN_EQUATION : INTEGER_EXPRESSION EQ INTEGER_EXPRESSION {
-                        $$ = ($1 == $3);
-                    }
-                    | INTEGER_EXPRESSION NEQ INTEGER_EXPRESSION {
-                        $$ = ($1 != $3);
-                    }
-                    | INTEGER_EXPRESSION AND INTEGER_EXPRESSION {
-                        $$ = ($1 && $3);
-                    }
-                    | INTEGER_EXPRESSION OR INTEGER_EXPRESSION {
-                        $$ = ($1 || $3);
-                    }
-                    |
-                    INTEGER_EXPRESSION LEQ INTEGER_EXPRESSION {
-                        $$ = ($1 <= $3);
-                    }
-                    | INTEGER_EXPRESSION HEQ INTEGER_EXPRESSION {
-                        $$ = ($1 >= $3);
-                    }
-                    | INTEGER_EXPRESSION HT INTEGER_EXPRESSION {
-                        $$ = ($1 > $3);
-                    }
-                    | INTEGER_EXPRESSION LT INTEGER_EXPRESSION {
-                        $$ = ($1 < $3);
+                    | INTEGER_EXPRESSION BOOL_OPERATOR INTEGER_EXPRESSION
+                    {
+                    $$ = new arb($2,"",$1,$3);
                     }
                     | BOOLEAN_LITERAL { 
-                        $$ = $1;
+                        $$ = new arb("true","bool");
                     }
 
 /*  Integer Expression Grammar      */
 
 INTEGER_EXPRESSION :LVALUE_ELEMENT ACCESS LVALUE_ELEMENT {
-                    $$ = 0;
+                    $$ = new arb("0","int");
                 }
                    | LVALUE_ELEMENT ACCESS FUNCTION_CALL {
-                        $$ = 0;
+                    $$ = new arb("0","int");
                    }
             | LVALUE_ELEMENT{
-                SymTable * symTable = findSymTable(std::string($1));
-                if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
-                {
-                    value val = symTable->getSymbolValue(std::string($1));
-                    if(std::holds_alternative<int>(val))
-                        $$ = std::get<int>(val);
-                }
-                else {
-                    yyerror(std::string("Undeclared variable ") + std::string($1));
-                    $$ = 0;
-                }
+                    $$ = new arb("0","int");
+                // SymTable * symTable = findSymTable(std::string($1));
+                // if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
+                // {
+                //     value val = symTable->getSymbolValue(std::string($1));
+                //     if(std::holds_alternative<int>(val))
+                //         $$ = std::get<int>(val);
+                // }
+                // else {
+                //     yyerror(std::string("Undeclared variable ") + std::string($1));
+                //     $$ = 0;
+                // }
             }
             | FUNCTION_CALL {
-                $$ = 0;
+                    $$ = new arb("0","int");
             }
             | INTEGER {
-                $$ = $1;
+                    $$ = new arb("0","int");
             }
-            | INTEGER_EXPRESSION PLUS INTEGER_EXPRESSION {
-                $$ = $1 + $3;
+            | INTEGER_EXPRESSION ADD_OPERATOR INTEGER_EXPRESSION{
+            $$ = new arb($2,"",$1,$3);
             }
-            | INTEGER_EXPRESSION MUL INTEGER_EXPRESSION {
-                $$ = $1 * $3;
-            }
-            | INTEGER_EXPRESSION MINUS INTEGER_EXPRESSION {
-                $$ = $1 - $3;
-            }
-            | INTEGER_EXPRESSION MOD INTEGER_EXPRESSION {
-                $$ = $1 % $3;
-            }
-            | INTEGER_EXPRESSION DIV INTEGER_EXPRESSION {
-                $$ = $1 / $3;
+             | INTEGER_EXPRESSION MUL_OPERATOR INTEGER_EXPRESSION{
+            $$ = new arb($2,"",$1,$3);
             }
             | '(' INTEGER_EXPRESSION ')' {
-                $$ = $2;
+                    $$ = $2;
             }
             ;
 
 /*  Function Call Grammar */
 
 FUNCTION_CALL : ID '(' PARAMETER_LIST ')' {
-    $$ = 0;
+    $$ = new arb($1,"int");
 }
 
 PARAMETER_LIST : PARAMETER
