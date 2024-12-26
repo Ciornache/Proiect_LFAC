@@ -862,200 +862,203 @@ case 8:
 YY_RULE_SETUP
 #line 24 "lang.l"
 { 
+    yylval.strValue = strdup(yytext);
     return PRIVATE; 
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 27 "lang.l"
+#line 28 "lang.l"
 { 
+    yylval.strValue = strdup(yytext);
     return PUBLIC; 
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 30 "lang.l"
-{ 
+#line 32 "lang.l"
+{
+    yylval.strValue = strdup(yytext); 
     return PROTECTED; 
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 33 "lang.l"
+#line 36 "lang.l"
 {return AND;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 34 "lang.l"
+#line 37 "lang.l"
 {return OR;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 35 "lang.l"
+#line 38 "lang.l"
 {return NEQ;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 36 "lang.l"
+#line 39 "lang.l"
 {return EQ;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 37 "lang.l"
+#line 40 "lang.l"
 {return HT;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 38 "lang.l"
+#line 41 "lang.l"
 {return LT;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 39 "lang.l"
+#line 42 "lang.l"
 {return LEQ;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 40 "lang.l"
+#line 43 "lang.l"
 {return HEQ;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 41 "lang.l"
+#line 44 "lang.l"
 {return TYPEOF;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 42 "lang.l"
+#line 45 "lang.l"
 {return PRINT;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 43 "lang.l"
+#line 46 "lang.l"
 {return IF;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 44 "lang.l"
+#line 47 "lang.l"
 {return ELSE_IF;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 45 "lang.l"
+#line 48 "lang.l"
 {return ELSE;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 46 "lang.l"
+#line 49 "lang.l"
 {return WHILE;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 47 "lang.l"
+#line 50 "lang.l"
 {return FOR;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 48 "lang.l"
+#line 51 "lang.l"
 {  return SCOPE_START;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 49 "lang.l"
+#line 52 "lang.l"
 {  return SCOPE_END;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 50 "lang.l"
+#line 53 "lang.l"
 {return INCR;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 51 "lang.l"
+#line 54 "lang.l"
 {return DECR;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 52 "lang.l"
+#line 55 "lang.l"
 {yylval.strValue = strdup(yytext); return PLUS;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 53 "lang.l"
+#line 56 "lang.l"
 {yylval.strValue = strdup(yytext); return MINUS;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 54 "lang.l"
+#line 57 "lang.l"
 {yylval.strValue = strdup(yytext); return MUL;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 55 "lang.l"
+#line 58 "lang.l"
 {yylval.strValue = strdup(yytext); return DIV;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 56 "lang.l"
+#line 59 "lang.l"
 {yylval.strValue = strdup(yytext);return MOD;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 57 "lang.l"
+#line 60 "lang.l"
 {return ACCESS;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 58 "lang.l"
+#line 61 "lang.l"
 {return RETURN;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 60 "lang.l"
+#line 63 "lang.l"
 {yylval.strValue=strdup(yytext); return ID;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 61 "lang.l"
+#line 64 "lang.l"
 {yylval.iValue = atoi(yytext); return INTEGER;}
 	YY_BREAK
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 62 "lang.l"
+#line 65 "lang.l"
 {yylineno++;}
 	YY_BREAK
 case 40:
 /* rule 40 can match eol */
 YY_RULE_SETUP
-#line 63 "lang.l"
+#line 66 "lang.l"
 { }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 64 "lang.l"
+#line 67 "lang.l"
 {return yytext[0];}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 65 "lang.l"
+#line 68 "lang.l"
 { return 0; } 
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 66 "lang.l"
+#line 69 "lang.l"
 {}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 67 "lang.l"
+#line 70 "lang.l"
 {}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 68 "lang.l"
+#line 71 "lang.l"
 ECHO;
 	YY_BREAK
-#line 1059 "lex.yy.c"
+#line 1062 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2058,5 +2061,5 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 68 "lang.l"
+#line 71 "lang.l"
 
