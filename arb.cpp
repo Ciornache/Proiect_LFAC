@@ -9,155 +9,173 @@ bool isOperator(char ch) {
 }
 
 bool isUnaryOperator(string op) {
-    return op == "!";
+    return op == "!" || op == "-";
 }
 
 // Constructori
 arb::arb() {
-    this->root = nullptr;
+    this->left = nullptr;
+    this->right = nullptr;
+    this->token = "";
+    this->type = "";
 }
 
-arb::arb(nod* root) {
-    this->root = root;
+arb::arb(string token, string type)
+{
+    this->left = nullptr;
+    this->right = nullptr;
+    this->token = token;
+    this->type = type;
 }
 
+arb::arb(string token, string type, arb* left, arb* right)
+{
+    this->left = left;
+    this->right = right;
+    this->token = token;
+    this->type = type;
+}
 // Getters și setters
-nod* arb::getRoot() {
-    return root;
+arb* arb::getRoot() {
+    return this;
 }
 
-void arb::setRoot(nod* root) {
-    this->root = root;
-}
 
 // Funcția pentru verificarea conflictelor de tip
-bool arb::hasConflictingTypes(nod* start) {
-    if (!start) return false;
-
+bool arb::hasConflictingTypes() {
     // Dacă nodul este o valoare literală (număr, string, etc.)
-    if (isalnum(start->token[0])) {
+    if (isalnum(token[0])) {
         return false;
     }
     // Dacă nodul este un operator unar
-    else if (isUnaryOperator(start->token)) {
-        return hasConflictingTypes(start->left); // Verificăm doar copilul stâng
+    else if (isUnaryOperator(token)) {
+        String type = left->getExpressionType();
+        if (type == "bool" && token == "-")
+            return true;
+        return left->hasConflictingTypes(); // Verificăm doar copilul stâng
     }
     // Dacă nodul este un operator binar
-    else if (isOperator(start->token[0])) {
-        bool leftConflict = hasConflictingTypes(start->left);
-        bool rightConflict = hasConflictingTypes(start->right);
-        return leftConflict || rightConflict || (start->left->type != start->right->type);
+    else if (isOperator(token[0])) {
+        bool leftConflict = left->hasConflictingTypes();
+        bool rightConflict = right->hasConflictingTypes();
+        String leftType=left->getExpressionType();
+        String rightType = right->getExpressionType();
+        return leftConflict || rightConflict || (left->type != right->type) 
+        || ((leftType=="bool" || rightType=="bool") && strchr("+-/*%=<",token[0]));
     }
     return false;
 }
 
 // Determinarea tipului expresiei
-String arb::getExpressionType(nod* start) {
-    if (!start) return "unknown";
+String arb::getExpressionType() {
+  
+    if (type != "")
+        return type;
+    // Operatorii unari
+    if (isUnaryOperator(token)) {
+        String operandType = left->getExpressionType();
 
-    // Verificăm pentru valoare numerică
-    if (isdigit(start->token[0])) {
-        start->type = "int";
-        return "int";
-    }
-
-    // Verificăm pentru valori booleene
-    if (start->token == "true" || start->token == "false") {
-        start->type = "bool";
-        return "bool";
-    }
-
-    // Verificăm pentru operatorii unari
-    if (isUnaryOperator(start->token)) {
-        String operandType = getExpressionType(start->left);
-        start->type = operandType;
-        if (start->token == "!"){
-                return "bool";  
+        if (token == "!") {
+            return "bool";
         }
-        else if (start->token == "-") {
-            if (operandType == "int") {
-                return "int";
-            }
-            return "conflict";  // Dacă operandul nu este "int", avem un conflict
+        else if (token == "-") {
+            return operandType;
         }
     }
 
-    // Verificăm pentru operatorii binari
-    if (isOperator(start->token[0])) {
-        String leftType = getExpressionType(start->left);
-        String rightType = getExpressionType(start->right);
-        if (start->token == "&&" || start->token == "||") {
-            // Pentru operatorii logici, operanzii trebuie să fie booleeni
-            if (leftType == "bool" && rightType == "bool") {
-                return "bool";
-            }
-            return "conflict";
+    // Operatorii binari
+    if (isOperator(token[0])) {
+        String leftType = left->getExpressionType();
+        String rightType = right->getExpressionType();
+
+        if (token == "+" || token == "-" || token == "*" || token == "/" || token == "%") {
+            return leftType;
         }
-        else if (leftType == rightType) {
-            return leftType;  // Tipul expresiei binare va fi același pe ambele laturi
-        }
-        else {
-            return "conflict";
+        else if (token == "&&" || token=="||" || token== ">=" || token == ">" || token == "==" || token == "<=" || token == "<") {
+            return "bool";
         }
     }
-    return start->type;  // Dacă este un nod de tip variabil sau constant, returnăm tipul acestuia
+
+    return "unknown";
 }
 // Evaluarea expresiei
 // Evaluarea expresiei
-String arb::getExpressionResult(nod* start) {
-    if (!start) return "";
-
-    // Valori numerice
-    if (isdigit(start->token[0])) {
-        return start->token;
+String arb::getExpressionResult() {
+    if (isdigit(token[0])) {
+        return token;
     }
 
     // Valori booleene
-    if (start->token == "true" || start->token == "false") {
-        return start->token;
+    if (token == "true" || token == "false") {
+        return token;
     }
 
     // Operatorii unari
-    if (isUnaryOperator(start->token)) {
-        String operandResult = getExpressionResult(start->left);
-
-        if (start->token == "!") {
-            // Modificăm pentru a accepta tipul "int" și a compara cu 0
-            if (start->left->token == "0" || operandResult == "0") {
+    if (isUnaryOperator(token)) {
+        String operandResult = left->getExpressionResult();
+        left->type = left->getExpressionType();
+        if (token == "!") {
+            if (left->type!="bool" && (left->token == "0" || operandResult == "0")) {
                 return "true";
             }
+            else if(left->type != "bool")
             return "false";
+            else {
+                if (operandResult == "true") return "false";
+                return "true";
+            }
         }
-        else if (start->token == "-") {
+        else if (token == "-") {
             return to_string(-stoi(operandResult));
         }
     }
 
     // Operatorii binari
-    else if (isOperator(start->token[0])) {
-        String leftResult = getExpressionResult(start->left);
-        String rightResult = getExpressionResult(start->right);
-
-        if (start->token == "+") {
+    if (isOperator(token[0])) {
+        String leftResult = left->getExpressionResult();
+        left->type = left->getExpressionType();
+        String rightResult = right->getExpressionResult();
+        right->type = right->getExpressionType();
+        if (token == "+") {
             return to_string(stoi(leftResult) + stoi(rightResult));
         }
-        if (start->token == "-") {
+        if (token == "-") {
             return to_string(stoi(leftResult) - stoi(rightResult));
         }
-        if (start->token == "*") {
+        if (token == "*") {
             return to_string(stoi(leftResult) * stoi(rightResult));
         }
-        if (start->token == "/") {
+        if (token == "/") {
             if (stoi(rightResult) == 0) {
                 throw runtime_error("Division by zero");
             }
             return to_string(stoi(leftResult) / stoi(rightResult));
         }
-        else if (start->token == "&&") {
+        else if (token == "&&") {
             return (leftResult == "true" && rightResult == "true") ? "true" : "false";
         }
-        else if (start->token == "||") {
+        else if (token == "||") {
             return (leftResult == "true" || rightResult == "true") ? "true" : "false";
+        }
+        else if (token == ">") {
+            if (stoi(leftResult) > stoi(rightResult))
+                return "true";
+            return "false";
+        }
+        else if (token == ">=") {
+            if (stoi(leftResult) >= stoi(rightResult))
+                return "true";
+            return "false";
+        }
+        else if (token == "<") {
+            if (stoi(leftResult) < stoi(rightResult))
+                return "true";
+            return "false";
+        }
+        else if (token == "<=") {
+            if (stoi(leftResult) <= stoi(rightResult))
+                return "true";
+            return "false";
         }
     }
 
