@@ -23,16 +23,15 @@ commentChr [/]
     return CLASS; 
 }
 "private" { 
-        printf("I found token private\n");
+    yylval.strValue = strdup(yytext);
     return PRIVATE; 
 }
 "public"  { 
-        printf("I found token public\n");
-
+    yylval.strValue = strdup(yytext);
     return PUBLIC; 
 }
-"protected" { 
-        printf("I found token protected\n");
+"protected" {
+    yylval.strValue = strdup(yytext); 
     return PROTECTED; 
 }
 "&&" {return AND;printf("I found operator :&&\n");}
