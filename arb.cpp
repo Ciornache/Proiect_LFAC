@@ -49,7 +49,7 @@ arb *arb::getRoot()
 bool arb::hasConflictingTypes()
 {
     // Dacă nodul este o valoare literală (număr, string, etc.)
-    if (isalnum(token[0]))
+    if (isalnum(token[0]) || token.size() > 0 && token[0] == '-' && isalnum(token[1]))
     {
         return false;
     }
@@ -57,7 +57,7 @@ bool arb::hasConflictingTypes()
     else if (isUnaryOperator(token))
     {
         String type = left->getExpressionType();
-        if (type == "bool" && token == "-")
+        if ((type == "bool" || type == "string") && token == "-")
             return true;
         return left->hasConflictingTypes(); // Verificăm doar copilul stâng
     }
@@ -68,7 +68,14 @@ bool arb::hasConflictingTypes()
         bool rightConflict = right->hasConflictingTypes();
         String leftType = left->getExpressionType();
         String rightType = right->getExpressionType();
-        return leftConflict || rightConflict || (left->type != right->type) || ((leftType == "bool" || rightType == "bool") && strchr("+-/*%=<", token[0]));
+
+        if(leftType == "string" && rightType == "string" && token != "+" && token != "==" && token != "!=" && token != ">=" && token != "<=" && token != ">" && token != "<")
+            return true;
+        
+        if(leftType == "float" && rightType == "float" && token == "%")
+            return true;
+        
+        return leftConflict || rightConflict || (leftType != rightType) || ((leftType == "bool" || rightType == "bool") && strchr("+-/*%=<", token[0]));
     }
     return false;
 }
@@ -76,7 +83,6 @@ bool arb::hasConflictingTypes()
 // Determinarea tipului expresiei
 String arb::getExpressionType()
 {
-
     if (type != "")
         return type;
     // Operatorii unari
@@ -109,13 +115,13 @@ String arb::getExpressionType()
             return "bool";
         }
     }
-
     return "unknown";
 }
 // Evaluarea expresiei
 // Evaluarea expresiei
 String arb::getExpressionResult()
 {
+    /// Am adaugat partea a doua din conditie pentru numere negative. Exista unele numere care devin negative pe parcursul executiei programului si nu vor avea minus ca operator unar in fata a.i nu vor fi recunoscute fara partea asta din if
     if (isdigit(token[0]) || token.size() > 1 && token[0] == '-' && isdigit(token[1]))
     {
         return token;
@@ -159,23 +165,52 @@ String arb::getExpressionResult()
         right->type = right->getExpressionType();
         if (token == "+")
         {
-            return to_string(stoi(leftResult) + stoi(rightResult));
+            if(left->type == "float")
+                return to_string(stof(leftResult) + stof(rightResult));
+            else if(left->type == "int" || left->type == "bool")
+                return to_string(stoi(leftResult) + stoi(rightResult));
+            else if(left->type == "string")
+                return leftResult + rightResult;
+            else if(left->type == "char")
+                return to_string(char(int(leftResult[0]) + int(rightResult[0])));
         }
         if (token == "-")
         {
-            return to_string(stoi(leftResult) - stoi(rightResult));
+            if(left->type == "float")
+                return to_string(stof(leftResult) - stof(rightResult));
+            else if(left->type == "int" || left->type == "bool")
+                return to_string(stoi(leftResult) - stoi(rightResult));
+            else if(left->type == "char")
+                return to_string(char(int(leftResult[0]) - int(rightResult[0])));
         }
         if (token == "*")
         {
-            return to_string(stoi(leftResult) * stoi(rightResult));
+            if(left->type == "float")
+                return to_string(stof(leftResult) * stof(rightResult));
+            else if(left->type == "int" || left->type == "bool")
+                return to_string(stoi(leftResult) * stoi(rightResult));
+            else if(left->type == "char")
+                return to_string(char(int(leftResult[0]) * int(rightResult[0])));
         }
         if (token == "/")
         {
             if (stoi(rightResult) == 0)
-            {
                 throw runtime_error("Division by zero");
-            }
-            return to_string(stoi(leftResult) / stoi(rightResult));
+            if(left->type == "float")
+                return to_string(stof(leftResult) / stof(rightResult));
+            else if(left->type == "int" || left->type == "bool")
+                return to_string(stoi(leftResult) / stoi(rightResult));
+            else if(left->type == "char")
+                return to_string(char(int(leftResult[0]) / int(rightResult[0])));
+        }
+        else if(token == "%")
+        {
+            if (stoi(rightResult) == 0)
+                throw runtime_error("Division by zero");
+            else if(left->type == "int" || left->type == "bool")
+                return to_string(stoi(leftResult) % stoi(rightResult));
+            else if(left->type == "char")
+                return to_string(char(int(leftResult[0]) % int(rightResult[0])));
         }
         else if (token == "&&")
         {
@@ -187,35 +222,110 @@ String arb::getExpressionResult()
         }
         else if (token == ">")
         {
-            if (stoi(leftResult) > stoi(rightResult))
-                return "true";
-            return "false";
+            if(left->type == "int" || left->type == "bool") 
+            {
+                if (stoi(leftResult) > stoi(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "string" || left->type == "char")
+            {
+                if(leftResult > rightResult)
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "float")
+            {
+                if(stof(leftResult) > stof(rightResult))
+                    return "true";
+                return "false";
+            }
         }
         else if (token == ">=")
         {
-            if (stoi(leftResult) >= stoi(rightResult))
-                return "true";
-            return "false";
+            if(left->type == "int" ||  left->type == "bool") 
+            {
+                if (stoi(leftResult) >= stoi(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "string" || left->type == "char")
+            {
+                if(leftResult >= rightResult)
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "float")
+            {
+                if(stof(leftResult) >= stof(rightResult))
+                    return "true";
+                return "false";
+            }
         }
         else if (token == "<")
         {
-            if (stoi(leftResult) < stoi(rightResult))
-                return "true";
-            return "false";
+            if(left->type == "int"  || left->type == "bool") 
+            {
+                if (stoi(leftResult) < stoi(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "string" || left->type == "char")
+            {
+                if(leftResult < rightResult)
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "float")
+            {
+                if(stof(leftResult) < stof(rightResult))
+                    return "true";
+                return "false";
+            }
         }
         else if (token == "<=")
         {
-            if (stoi(leftResult) <= stoi(rightResult))
-                return "true";
-            return "false";
+            if(left->type == "int" || left->type == "bool") 
+            {
+                if (stoi(leftResult) <= stoi(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "string" || left->type == "char")
+            {
+                if(leftResult <= rightResult)
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "float")
+            {
+                if(stof(leftResult) <= stof(rightResult))
+                    return "true";
+                return "false";
+            }
         }
         else if (token == "!=")
         {
-            if (stoi(leftResult) != stoi(rightResult))
-                return "true";
-            return "false";
+            if(left->type == "int" || left->type == "bool") 
+            {
+                if (stoi(leftResult) != stoi(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "string" || left->type == "char")
+            {
+                if(leftResult != rightResult)
+                    return "true";
+                return "false";
+            }
+            else if(left->type == "float")
+            {
+                if(stof(leftResult) != stof(rightResult))
+                    return "true";
+                return "false";
+            }
         }
     }
 
-    return "unknown";
+    return token;
 }

@@ -19,7 +19,7 @@ std::string SymTable::getSymbolType(std::string s)
 bool SymTable::addSymbol(std::string name, std::string type)
 {
     if(symTable.find(name) == symTable.end())
-    {
+    {    
         symExist[name] = true;
         symTable[name].type = type; symTable[name].value = SymTable::getDefaultValue(type);
         return true;
@@ -310,4 +310,18 @@ bool ClassSymTable::isSymbolValid(std::string s)
         if(newName == s) return true;
     }
     return false;
+}
+
+std::string ClassSymTable::getSymbolPrivacy(std::string s)
+{
+    std::stringstream ss;
+    std::string prv;
+    ss << s; ss >> prv;
+    return prv;
+}
+
+ClassSymTable::~ClassSymTable()
+{
+    for(unsigned int j = 0;j < funcSymTables.size(); j++)
+        delete funcSymTables[j];
 }

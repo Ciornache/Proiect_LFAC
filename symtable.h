@@ -85,8 +85,10 @@ class ClassSymTable : public SymTable
         void printClassAttributes();
         void printClassMethod(SymTable * funcTable);
         virtual bool isSymbolValid(std::string s);
+        std::string getSymbolPrivacy(std::string s);
         ClassSymTable(std::string type, std::string name);
         ClassSymTable();    
+        ~ClassSymTable();
 };
 
 value applyOperation(value val, value val2, char op);
