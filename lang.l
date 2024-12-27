@@ -17,8 +17,15 @@ commentChr [/]
 "int"|"float"|"char"|"compl"|"bool"|"string" {yylval.strValue = strdup(yytext); return TYPE;}
 "true" {yylval.bValue = true; return BOOLEAN_LITERAL;}
 "false" {yylval.bValue = false; return BOOLEAN_LITERAL;}
-"\""[^"]*"\"" {yylval.strValue = strdup(yytext); return STRING_LITERAL;}
+'[^']+' {yylval.cValue = yytext[1]; return CHAR_LITERAL;}
+"\""[^"]*"\"" {
+    char strl[1001];
+    strcpy(strl, yytext + 1), 
+    strl[strlen(strl)-1] = 0; 
+    yylval.strValue = strdup(strl); 
+    return STRING_LITERAL;}
 "class"   { 
+    /*printf("I found token class\n");*/
     return CLASS; 
 }
 "private" { 
@@ -33,14 +40,19 @@ commentChr [/]
     yylval.strValue = strdup(yytext); 
     return PROTECTED; 
 }
-"&&" {return AND;}
-"||" {return OR;}
-"!=" {return NEQ;}
-"==" {return EQ;}
-">" {return HT;}
-"<" {return LT;}
-"<=" {return LEQ;}
-">=" {return HEQ;}
+"&&" {yylval.strValue = strdup(yytext); return AND;}
+"||" {yylval.strValue = strdup(yytext); return OR;}
+"!=" { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
+"==" { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
+">"  { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext);  return BOOL_OPERATOR; }
+"<"  { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext);  return BOOL_OPERATOR; }
+"<=" { /*cout << "Found relational operator: " << yytext << endl;*/  yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
+">=" { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext);  return BOOL_OPERATOR; }
+"+"  { /*cout << "Found arithmetic operator: " << yytext << endl;*/  yylval.strValue = strdup(yytext); return ADD_OPERATOR; }
+"-"  { /*cout << "Found arithmetic operator: " << yytext << endl;*/  yylval.strValue = strdup(yytext); return ADD_OPERATOR; }
+"*"  { /*cout << "Found arithmetic operator: " << yytext << endl;*/   yylval.strValue = strdup(yytext); return MUL_OPERATOR; }
+"/"  { /*cout << "Found arithmetic operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext);  return MUL_OPERATOR; }
+"%"  { /*cout << "Found arithmetic operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext);  return MUL_OPERATOR; }
 "typeof" {return TYPEOF;}
 "print" {return PRINT;}
 "if" {return IF;}
@@ -52,15 +64,12 @@ commentChr [/]
 "}" {  return SCOPE_END;}
 "++" {return INCR;}
 "--" {return DECR;}
-"+" {yylval.strValue = strdup(yytext); return PLUS;}
-"-" {yylval.strValue = strdup(yytext); return MINUS;}
-"*" {yylval.strValue = strdup(yytext); return MUL;}
-"/" {yylval.strValue = strdup(yytext); return DIV;}
-"%" {yylval.strValue = strdup(yytext);return MOD;}
 "." {return ACCESS;}
-"return" {return RETURN;}
+"return" {/*printf("FOUND RETURN\n");*/return RETURN;}
 
-{letter}({letter}|{digit}|{specialCharacters})* {yylval.strValue=strdup(yytext); return ID;}
+{letter}({letter}|{digit}|{specialCharacters})* {yylval.strValue=strdup(yytext);/* printf("Found ID:%s \n"
+ ,yytext);*/ return ID;}
+{digit}+['.']{digit}+ {yylval.fValue = stof(std::string(yytext)); return FLOAT_LITERAL; }
 {digit}+ {yylval.iValue = atoi(yytext); return INTEGER;}
 \n {yylineno++;}
 {commentChr}{commentChr}[^\n]*[\n] { }

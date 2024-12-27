@@ -1,27 +1,33 @@
 %{
+    ///TODO : Ciornei: Refactor Code and Fix Class Sym Tables
+    ///TODO : Marciuc: Change Grammar / Add Complex Numbers 
+
     #include "symtable.h"
+    #include "arb.h"
+    #include <string>
+    #define ERR(errl) std::string("Error on line " + to_string(errl) + ": ")
+
     using namespace std;
     extern int yylex();
     extern FILE * yyin;
     extern char * yytext;
     extern int yylineno;
-    bool globalAreaOn = true, funcOn = false;
-
-
-    /// TODO: Assign values to class members
+    bool globalAreaOn = true, funcOn = false, declOn = false;
 
     void yyerror(std::string s);
     bool isSymbolValid(std::string s, std::string type);   
     bool validateStatement();
     bool validateFunction(std::string name, std::vector<std::string> parameters);
     void processUpdate(SymTable * symTable, std::string name, std::string type, value val, char op);
-    void processAssignmentStatement(SymTable * symTable, std::string name, std::string type, value val, char op);
+    void processAssignmentStatement(arb * arb, std::string name, char op);
 
+    std::string fromValueToString(value val);
     std::string extractValueFromValue(value val);
     std::string extractTypeFromVariant(value value);
     ClassSymTable * getClassSymTable(std::string name);
     bool isClassMember(std::string name);
     SymTable * findSymTable(std::string symbol);
+    SymTable * getFunctionSymTable(std::string name);
 
 
     SymTable * globalSymTable;
@@ -30,11 +36,15 @@
     std::vector<SymTable*> symTables, funcSymTables;
     std::vector<ClassSymTable*> classSymTables;
     std::vector<std::string> parameters;
+
 %}
 %union {
     char * strValue;
     int iValue;
     bool bValue;
+    float fValue;
+    char cValue;
+    class arb* tree;
 }
 
 %token<strValue> ID
@@ -42,37 +52,41 @@
 %token<strValue> TYPE
 %token<bValue> BOOLEAN_LITERAL 
 %token<strValue> STRING_LITERAL
+%token<fValue> FLOAT_LITERAL
+%token<cValue> CHAR_LITERAL
 %token OPEN_WALLET CLOSE_WALLET 
 %token PRINT TYPEOF
 %token PRIVATE PUBLIC PROTECTED
 %token CLASS ACCESS
 %token AND
 %token OR
-%token EQ NEQ LT LEQ HT HEQ
 %token IF ELSE ELSE_IF WHILE FOR
 %token SCOPE_START SCOPE_END 
-%token PLUS MINUS MUL DIV MOD INCR DECR
+%token INCR DECR
 %token RETURN 
-
-%type<iValue> INTEGER_EXPRESSION FUNCTION_CALL
-%type<bValue> BOOLEAN_EXPRESSION BOOLEAN_EQUATION
-%type<strValue> PLUS MINUS MUL DIV MOD OPERATOR 
-%type<strValue> ARRAY_LITERAL LVALUE_ELEMENT
+%token<strValue> BOOL_OPERATOR ADD_OPERATOR MUL_OPERATOR
+%type<tree> FUNCTION_CALL BOOLEAN_EXPRESSION EXPRESSION_LITERAL EXPRESSION
+%type<strValue> ARRAY_LITERAL LVALUE_ELEMENT DECL_START
 %type<strValue> PRIVATE PUBLIC PROTECTED ACCESS_MODIFIER CLASS_BEGIN_ELEMENT CLASS_LITERAL
 
 %left OR
 %left AND
-%left NEQ EQ LT LEQ HT HEQ
-%left PLUS MINUS
-%left MUL DIV MOD
+%left BOOL_OPERATOR
+%left ADD_OPERATOR
+%left MUL_OPERATOR
 
 %start S
 
 %%
 
+///TODO : Treat values as truthy and falsy in boolean expressions
+
 /*  Start Area  */
 
-S : DECLARATIONS OPEN_WALLET MAIN CLOSE_WALLET {
+MAIN_START : OPEN_WALLET {globalAreaOn = false; }
+MAIN_END : CLOSE_WALLET
+
+S : DECLARATIONS MAIN_START MAIN MAIN_END {
         printf("Program compiled succesfully!\n");
         return 0;
 }
@@ -83,21 +97,25 @@ S : DECLARATIONS OPEN_WALLET MAIN CLOSE_WALLET {
 
 /*  Function Declaration Grammar   */
 
-FUNC_START : TYPE ID '(' { funcOn = true; funcSymTables.push_back(new SymTable(std::string($1), std::string($2))); }
+DECL_START : TYPE {declOn = true; strcpy($$, $1); }
+
+FUNC_START : DECL_START ID '(' { funcOn = true; funcSymTables.push_back(new SymTable(std::string($1), std::string($2))); declOn = false;}
 
 FUNCTION_DECLARATION : FUNC_START DECL_PARAMETER_SEQUENCE ')' { funcOn = false; }
 
 FUNCTION_DEFINITION : FUNC_START DECL_PARAMETER_SEQUENCE ')' SCOPE { funcOn = false; }
 
-DECL_PARAMETER_SEQUENCE : TYPE ID ',' DECL_PARAMETER_SEQUENCE {
+DECL_PARAMETER_SEQUENCE : DECL_START ID ',' DECL_PARAMETER_SEQUENCE {
                             SymTable * symTable = funcSymTables.back();
                             symTable->addParameter(std::string($1));
                             symTable->addSymbol(std::string($2), std::string($1));
+                            declOn = false;
                         }
-                        | TYPE ID  {
+                        | DECL_START ID  {
                             SymTable * symTable = funcSymTables.back();
                             symTable->addParameter(std::string($1));
                             symTable->addSymbol(std::string($2), std::string($1));
+                            declOn = false;
                         }
                         | /* empty */
 
@@ -118,15 +136,15 @@ CLASS_MEMBER_LIST : CLASS_MEMBER_LIST CLASS_MEMBER
                   | CLASS_MEMBER
                   ;
 
-CLASS_MEMBER : ACCESS_MODIFIER TYPE IDSEQUENCE ';' {
+CLASS_MEMBER : ACCESS_MODIFIER DECL_START IDSEQUENCE ';' {
                 ClassSymTable * symTable = classSymTables.back();
                 for(auto [name, value] : unSymbols) 
                 {
                     std::string className = std::string($1) + " " + name;
                     symTable->addSymbol(className, std::string($2));
-                    // std::cout << std::string($2) << ' ' << className << '\n';
                     processUpdate(symTable, className, std::string($2), value, '=');
                 }
+                declOn = false;
             }
              | ACCESS_MODIFIER FUNCTION_DECLARATION ';' {
                     ClassSymTable * symTable = classSymTables.back();
@@ -137,7 +155,7 @@ CLASS_MEMBER : ACCESS_MODIFIER TYPE IDSEQUENCE ';' {
                     funcSymTable->setFunctionName(funcName);
                     symTable->addFuncSymTable(funcSymTable);
              }
-             | TYPE IDSEQUENCE ';' {
+             | DECL_START IDSEQUENCE ';' {
                 ClassSymTable * symTable = classSymTables.back();
                 for(auto [name, value] : unSymbols) 
                 {
@@ -145,6 +163,7 @@ CLASS_MEMBER : ACCESS_MODIFIER TYPE IDSEQUENCE ';' {
                     symTable->addSymbol(className, std::string($1));
                     processUpdate(symTable, className, std::string($1), value, '=');
                 }
+                declOn = false;
              }
              | FUNCTION_DECLARATION ';' {
                     ClassSymTable * symTable = classSymTables.back();
@@ -174,57 +193,53 @@ CLASS_MEMBER : ACCESS_MODIFIER TYPE IDSEQUENCE ';' {
                     symTable->addFuncSymTable(funcSymTable);
              }
 
-ACCESS_MODIFIER : PRIVATE {
-                    strcpy($$, $1);
-                }
-                | PUBLIC {
-                    strcpy($$, $1);
-                }
-                | PROTECTED {
-                    strcpy($$, $1);
-                }
+ACCESS_MODIFIER : PRIVATE {strcpy($$, $1);}
+                | PUBLIC {strcpy($$, $1);}
+                | PROTECTED {strcpy($$, $1);}
                 ;
 
-/* Global Variables Declaration Grammar */
+
 
 /* Global Variables Declaration Grammar */
 
-LINE_DECLARATION : TYPE IDSEQUENCE {
-        SymTable * symTable = symTables.back();
-        bool ok = 0;
-        for(unsigned int i = 0;i < unSymbols.size(); i++)
-        {
-            std::string symbol = unSymbols[i].first;
-            if(symTable->isSymbolValid(symbol)) 
+/* Global Variables Declaration Grammar */
+
+
+LINE_DECLARATION : DECL_START IDSEQUENCE {
+            SymTable * symTable = symTables.back();
+            bool ok = 0;
+            for(unsigned int i = 0;i < unSymbols.size(); i++)
             {
-                ok = 1;
-                yyerror(symbol + " already declared!");
-                break;
+                std::string symbol = unSymbols[i].first;
+                if(symTable->isSymbolValid(symbol)) 
+                {
+                    ok = 1;
+                    yyerror(ERR(yylineno) + symbol + " already declared!");
+                    break;
+                }
             }
-        }
-        if(!ok) 
-        {
-            for(auto [name, val] : unSymbols)
+            if(!ok) 
             {
-                symTable->addSymbol(name, $1);
-                processUpdate(symTable, name, std::string($1), val, '=');
+                for(auto [name, val] : unSymbols)
+                {
+                    symTable->addSymbol(name, $1);
+                    processUpdate(symTable, name, std::string($1), val, '=');
+                }
             }
+            unSymbols.clear();
+            declOn = false;
         }
-        unSymbols.clear();
-}
-| ID ID {
-    SymTable * symTable = symTables.back();
-    symTable->addSymbol(std::string($2), std::string($1));
-}
+        | ID ID {
+            SymTable * symTable = symTables.back();
+            symTable->addSymbol(std::string($2), std::string($1));
+        }
 
 
 IDSEQUENCE : ID_SEQUENCE_ELEMENT 
            | ID_SEQUENCE_ELEMENT ',' IDSEQUENCE  
            ;
 
-ID_SEQUENCE_ELEMENT : ID {
-                         unSymbols.push_back({$1, 0});
-                    }
+ID_SEQUENCE_ELEMENT : ID {unSymbols.push_back({$1, 0});}
                     | ASSIGNMENT_STATEMENT
 
 
@@ -298,9 +313,12 @@ IF_COMPOSITION : IF_STRUCTURE {
 IF_STRUCTURE : IF_STATEMENT SCOPE 
              | IF_STATEMENT SCOPE ELSE_BLOCKS
 
-IF_STATEMENT : IF BOOLEAN_EXPRESSION {
+IF_STATEMENT : IF BOOLEAN_EXPRESSION 
+{
     ifController = {true, 0};
-    if($2) 
+    if($2->hasConflictingTypes()) 
+        yyerror(ERR(yylineno) + "Invalid Expression in if statement\n");
+    else if($2->getExpressionType()!="bool" && $2->getExpressionResult()!="0" || $2->getExpressionType()=="bool" && $2->getExpressionResult()=="true") 
         ifController.second = 1;
 }
 
@@ -314,7 +332,9 @@ ELSE_BLOCK : ELSE_STATEMENT SCOPE
 
 ELSE_IF_STATEMENT : ELSE_IF  BOOLEAN_EXPRESSION  {
     if(ifController.second) ifController.second = -1;
-    if($2 && ifController.second == 0)
+    if($2->hasConflictingTypes()) 
+        yyerror(ERR(yylineno) + "Invalid Expression in else if statement\n");
+    else if(($2->getExpressionType()!="bool" && $2->getExpressionResult()!="0" || $2->getExpressionType()=="bool" && $2->getExpressionResult()=="true") && ifController.second == 0)
         ifController.second = 1;
 }
 
@@ -353,182 +373,109 @@ STATEMENT :   ASSIGNMENT_STATEMENT
 
 LVALUE_ELEMENT : ID 
                | ARRAY_LITERAL
+               | CLASS_LITERAL 
 
 CLASS_LITERAL : LVALUE_ELEMENT ACCESS ID {
     if(isClassMember($1)) 
     {
         ClassSymTable * classSymTable = getClassSymTable($1);
-        if(classSymTable == NULL) {
-            yyerror("Class Identifier " + std::string($1) + " doesn't exist!\n");
-            exit(1);
-        }
-        else {
-            if(!classSymTable->isSymbolInClass(std::string($3))) {
-                yyerror(std::string("Identifier " + std::string($3) + " doesn't exist in class " + std::string($1)));
-                exit(1);
-            }
+        if(classSymTable == NULL)
+            yyerror(ERR(yylineno) + "Class Identifier " + std::string($1) + " doesn't exist!\n");
+        else 
+        {
+            if(!classSymTable->isSymbolInClass(std::string($3))) 
+                yyerror(ERR(yylineno) + std::string("Identifier " + std::string($3) + " doesn't exist in class " + std::string($1)));
+            else if(classSymTable->getSymbolPrivacy(std::string($3)) != "public")
+                yyerror(ERR(yylineno) + "Identifier " + std::string($3) + " is " + classSymTable->getSymbolPrivacy(std::string($3)) + " in the context of class " + std::string($1));
         }
     }
     strcpy($$, $3);
 }
 
-RETURN_STATEMENT : RETURN INTEGER_EXPRESSION
+RETURN_STATEMENT : RETURN EXPRESSION
                  | RETURN BOOLEAN_EXPRESSION
-                 | RETURN STRING_LITERAL
 
-ASSIGNMENT_STATEMENT : CLASS_LITERAL '=' INTEGER_EXPRESSION {processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), "int", value($3), '='); }
-                     | LVALUE_ELEMENT '=' INTEGER_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), "int", value($3), '='); }
-                     | CLASS_LITERAL '=' BOOLEAN_EXPRESSION {processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), "bool", value($3), '='); }
-                     | LVALUE_ELEMENT '=' BOOLEAN_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), "bool", value($3), '=');}
-                     | CLASS_LITERAL '=' ARRAY_DECLARATION
-                     | LVALUE_ELEMENT '=' ARRAY_DECLARATION
-                     | CLASS_LITERAL OPERATOR '=' INTEGER_EXPRESSION 
-                     | LVALUE_ELEMENT OPERATOR '=' INTEGER_EXPRESSION { processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), "int", value($4), std::string($2)[0]);}
-                     | CLASS_LITERAL INCR
+ASSIGNMENT_STATEMENT : LVALUE_ELEMENT '=' EXPRESSION { processAssignmentStatement($3, std::string($1), '='); }
+                     | LVALUE_ELEMENT '=' ARRAY_DECLARATION {if(declOn) unSymbols.push_back({std::string($1), 0});}
+                     | LVALUE_ELEMENT ADD_OPERATOR '=' EXPRESSION { processAssignmentStatement($4, std::string($1), std::string($2)[0]);}
+                     | LVALUE_ELEMENT MUL_OPERATOR '=' EXPRESSION { processAssignmentStatement($4, std::string($1), std::string($2)[0]);}
                      | LVALUE_ELEMENT INCR
-                     | CLASS_LITERAL DECR
                      | LVALUE_ELEMENT DECR
-                     | LVALUE_ELEMENT '=' STRING_LITERAL {processAssignmentStatement(findSymTable(std::string($1)), std::string($1), "string", value($3), '=');}
+
 /* Print Statement Grammar  */
 
 
-PRINT_STATEMENT : PRINT '(' INTEGER_EXPRESSION ')' {
-                    if(validateStatement()) 
-                        std::cout << $3 << '\n';
-                }
-                | PRINT '(' BOOLEAN_EXPRESSION ')'{
-                    if(validateStatement()) 
-                    {
-                        if($3)
-                            std::cout << "true\n";
-                        else std::cout << "false\n";
-                    }
-                }
-                | PRINT '(' STRING_LITERAL ')' {
-                    if(validateStatement()) {
-                        std::cout << $3 << '\n';
-                    }
-                }
-
+PRINT_STATEMENT : PRINT '(' EXPRESSION ')' 
+                  {
+                    if($3->hasConflictingTypes()) 
+                        yyerror(ERR(yylineno) + "Invalid Expression in print statement!\n");
+                    else if(validateStatement()) 
+                        std::cout << $3->getExpressionResult() << '\n';
+                  }
+                  | PRINT '(' BOOLEAN_EXPRESSION ')'
+                  {
+                     if($3->hasConflictingTypes()) 
+                        yyerror(ERR(yylineno) + "Invalid Expression in print statement!\n");
+                    else if(validateStatement()) 
+                        std::cout << $3->getExpressionResult() << '\n';
+                  }
+                
 /*  Type Of Statement Grammar  */
 
-TYPE_OF_STATEMENT : TYPEOF '(' INTEGER_EXPRESSION ')' {
-                    if(validateStatement()) 
-                        std::cout << "integer\n";
-                }
-                |   TYPEOF '(' BOOLEAN_EXPRESSION ')' {
-                    if(validateStatement()) 
-                        std::cout << "bool\n";
-                }
+TYPE_OF_STATEMENT : TYPEOF '(' EXPRESSION ')' 
+                    {
+                        if($3->hasConflictingTypes()) 
+                            yyerror(ERR(yylineno) + "Invalid Expression in typeof statement!\n");
+                        else if(validateStatement()) 
+                            std::cout << $3->getExpressionType() << '\n';
+                    }
+                  | TYPEOF '(' BOOLEAN_EXPRESSION ')'
+                    {
+                        if($3->hasConflictingTypes()) 
+                            yyerror(ERR(yylineno) + "Invalid Expression in typeof statement!\n");
+                        else if(validateStatement()) {
+                            std::cout << $3->getExpressionType() << '\n';
+                        }
+                    }
+                
 
 /*         RValue Expressions Area           */
 
-OPERATOR : PLUS 
-         | MINUS 
-         | MUL 
-         | DIV
-         | MOD
+EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
+                    | STRING_LITERAL {$$ = new arb(fromValueToString(std::string($1)),"string");}
+                    | BOOLEAN_LITERAL {$$ = new arb(fromValueToString($1),"bool");}
+                    | FLOAT_LITERAL {$$ = new arb(fromValueToString($1),"float");}
+                    | CHAR_LITERAL {$$ = new arb(fromValueToString($1),"char");}
+                    | LVALUE_ELEMENT {
+                        SymTable * symTable = findSymTable(std::string($1));
+                        if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
+                        {
+                            value val = symTable->getSymbolValue(std::string($1));
+                            $$ = new arb(fromValueToString(val), extractTypeFromVariant(val));
+                        }
+                        else {
+                            yyerror(ERR(yylineno) + std::string("Undeclared variable ") + std::string($1));
+                            $$ = new arb("0", "int");
+                        }
+                    }
+                    | FUNCTION_CALL {$$ = $1;}
+                    | LVALUE_ELEMENT ACCESS FUNCTION_CALL {$$ = $3;}
+
+EXPRESSION : EXPRESSION_LITERAL {$$ = $1;}
+           | EXPRESSION ADD_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
+           | EXPRESSION MUL_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
+
+
 
 /*  Boolean Expression Grammar  */
 
-BOOLEAN_EXPRESSION :  BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION {
-                            $$ = ($1 && $3);
-                    }
-                    | BOOLEAN_EXPRESSION OR BOOLEAN_EXPRESSION {
-                            $$ = ($1 || $3);
-                    }
-                    | BOOLEAN_EQUATION {
-                        $$ = $1;
-                    }
-                    | '(' BOOLEAN_EXPRESSION ')' {
-                        $$ = $2;
-                    }
-                    ;
+BOOLEAN_EXPRESSION :  BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION {$$ = new arb("&&","",$1,$3);}
+                    | BOOLEAN_EXPRESSION OR BOOLEAN_EXPRESSION {$$ = new arb("||","",$1,$3);}
+                    | '(' BOOLEAN_EXPRESSION ')' {$$ = $2;}
+                    | EXPRESSION BOOL_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}                       
 
-BOOLEAN_EQUATION : INTEGER_EXPRESSION EQ INTEGER_EXPRESSION {
-                        $$ = ($1 == $3);
-                    }
-                    | INTEGER_EXPRESSION NEQ INTEGER_EXPRESSION {
-                        $$ = ($1 != $3);
-                    }
-                    | INTEGER_EXPRESSION AND INTEGER_EXPRESSION {
-                        $$ = ($1 && $3);
-                    }
-                    | INTEGER_EXPRESSION OR INTEGER_EXPRESSION {
-                        $$ = ($1 || $3);
-                    }
-                    |
-                    INTEGER_EXPRESSION LEQ INTEGER_EXPRESSION {
-                        $$ = ($1 <= $3);
-                    }
-                    | INTEGER_EXPRESSION HEQ INTEGER_EXPRESSION {
-                        $$ = ($1 >= $3);
-                    }
-                    | INTEGER_EXPRESSION HT INTEGER_EXPRESSION {
-                        $$ = ($1 > $3);
-                    }
-                    | INTEGER_EXPRESSION LT INTEGER_EXPRESSION {
-                        $$ = ($1 < $3);
-                    }
-                    | BOOLEAN_LITERAL { 
-                        $$ = $1;
-                    }
 
 /*  Integer Expression Grammar      */
-
-INTEGER_EXPRESSION : LVALUE_ELEMENT ACCESS LVALUE_ELEMENT {
-                    $$ = 0;
-                    SymTable * symTable = findSymTable(std::string($3));
-                    if(symTable != NULL && symTable->isSymbolValid(std::string($3))) 
-                    {
-                        value val = symTable->getSymbolValue(std::string($3));
-                        if(std::holds_alternative<int>(val))
-                            $$ = std::get<int>(val);
-                    }
-                    else 
-                        yyerror(std::string("Undeclared variable ") + std::string($1));
-                }
-                | LVALUE_ELEMENT ACCESS FUNCTION_CALL {
-                    $$ = 0;
-                }
-                | LVALUE_ELEMENT {
-                    SymTable * symTable = findSymTable(std::string($1));
-                    if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
-                    {
-                        value val = symTable->getSymbolValue(std::string($1));
-                        if(std::holds_alternative<int>(val))
-                            $$ = std::get<int>(val);
-                    }
-                    else {
-                        yyerror(std::string("Undeclared variable ") + std::string($1));
-                        $$ = 0;
-                    }
-            }
-            | FUNCTION_CALL {
-                $$ = 0;
-            }
-            | INTEGER {
-                $$ = $1;
-            }
-            | INTEGER_EXPRESSION PLUS INTEGER_EXPRESSION {
-                $$ = $1 + $3;
-            }
-            | INTEGER_EXPRESSION MUL INTEGER_EXPRESSION {
-                $$ = $1 * $3;
-            }
-            | INTEGER_EXPRESSION MINUS INTEGER_EXPRESSION {
-                $$ = $1 - $3;
-            }
-            | INTEGER_EXPRESSION MOD INTEGER_EXPRESSION {
-                $$ = $1 % $3;
-            }
-            | INTEGER_EXPRESSION DIV INTEGER_EXPRESSION {
-                $$ = $1 / $3;
-            }
-            | '(' INTEGER_EXPRESSION ')' {
-                $$ = $2;
-            }
-            ;
 
 /*  Function Call Grammar */
 
@@ -536,13 +483,18 @@ FUNCTION_CALL : ID '(' PARAMETER_LIST ')'
 {
     if(validateStatement()) 
     {
-        if(!validateFunction(std::string($1), parameters)) 
+        if(!validateFunction(std::string($1), parameters))
         {
-            yyerror("Function " + std::string($1) + " was not declared in this scope!\n");
-            exit(1);
+            yyerror(ERR(yylineno) + "Function " + std::string($1) + " was not declared in this scope!\n");        
+            $$ = new arb("0", "int");
         }
+        else 
+        {
+            SymTable * funcSymTable = getFunctionSymTable(std::string($1));
+            $$ = new arb("0", funcSymTable->getSymTableType());
+        } 
     } 
-    $$ = 0;
+
     parameters.clear();
 }
 
@@ -552,17 +504,15 @@ PARAMETER_LIST : PARAMETER {parameters.push_back("int");}
                | PARAMETER ',' PARAMETER_LIST {parameters.push_back("int");}
                | /* empty */
 
-PARAMETER : INTEGER_EXPRESSION
-          | STRING_LITERAL 
-          | BOOLEAN_EXPRESSION
+PARAMETER : EXPRESSION
 
 /* Array Grammar */
 
-ARRAY_LITERAL : ID '[' INTEGER_EXPRESSION ']' { strcpy($$, $1);}      
+ARRAY_LITERAL : ID '[' EXPRESSION ']' { strcpy($$, $1);}      
 
-ARRAY_DECLARATION : '[' INTEGER_EXPRESSION ';' INTEGER_EXPRESSION ']'
-                  | '[' INTEGER_EXPRESSION ']'
-                  | '[' INTEGER_EXPRESSION ';' ARRAY_DECLARATION ']'
+ARRAY_DECLARATION : '[' EXPRESSION ';' EXPRESSION ']'
+                  | '[' EXPRESSION ']'
+                  | '[' EXPRESSION ';' ARRAY_DECLARATION ']'
                   ;
 
 
@@ -570,7 +520,9 @@ ARRAY_DECLARATION : '[' INTEGER_EXPRESSION ';' INTEGER_EXPRESSION ']'
 
 void yyerror(std::string s)
 {
-    fprintf(stderr, "%s\n", s.c_str());
+    std::ofstream g("errors.txt", ios_base::app);
+    g << s;
+    g.close();
 }
 
 int main(int args, char * argv[])
@@ -579,6 +531,8 @@ int main(int args, char * argv[])
     yyin = f;
     ofstream g("log.out");
     g.close();
+    ofstream g2("errors.txt");
+    g2.close();
     symTables.push_back(new SymTable);
     yyparse();
     SymTable * symTable = symTables.back();
@@ -594,6 +548,12 @@ int main(int args, char * argv[])
         classSymTable->printClassAttributes();
         delete classSymTable;
     }
+    std::ifstream fin("errors.txt");
+    std::string error;
+    while(std::getline(fin, error))
+        std::cout << error << '\n';
+    fin.close();
+    g.close();
 }
 
 bool inUnSymbols(std::string s)
@@ -661,6 +621,30 @@ SymTable * findSymTable(std::string s)
     return NULL;
 }
 
+SymTable * getFunctionSymTable(std::string name)
+{
+    for(unsigned int j = 0; j < funcSymTables.size(); j++)
+        if(funcSymTables[j]->getSymTableName() == name)
+            return funcSymTables[j];
+    if(funcSymTables.back()->getSymTableName() == name && funcSymTables.back()->isParameterMatch(parameters))
+        return funcSymTables.back();
+    for(unsigned int j = 0; j < classSymTables.size(); j++)
+    {
+        std::vector<SymTable*> funcSymTables = classSymTables[j]->getFuncSymTables();
+        for(unsigned int i = 0;i < funcSymTables.size(); i++) 
+        {
+            SymTable * symTable = funcSymTables[i];
+            std::string funcName = symTable->getSymTableName();
+            std::stringstream ss;
+            ss << funcName; ss >> funcName >> funcName;
+            if(funcName == name && symTable->isParameterMatch(parameters)) 
+                return symTable;
+        }
+    }
+
+    return NULL;
+}
+
 ClassSymTable * getClassSymTable(std::string name)
 {
     for(unsigned int i = 0;i < classSymTables.size(); i++)
@@ -680,6 +664,7 @@ bool validateFunction(std::string name, std::vector<std::string> parameters)
     if(funcSymTables.back()->getSymTableName() == name && funcSymTables.back()->isParameterMatch(parameters))
         return true;
     
+    bool inClass = false;
 
     for(unsigned int j = 0; j < classSymTables.size(); j++)
     {
@@ -687,13 +672,20 @@ bool validateFunction(std::string name, std::vector<std::string> parameters)
         for(unsigned int i = 0;i < funcSymTables.size(); i++) 
         {
             SymTable * symTable = funcSymTables[i];
-            std::string funcName = symTable->getSymTableName();
+            std::string funcName = symTable->getSymTableName(), prv;
             std::stringstream ss;
-            ss << funcName; ss >> funcName >> funcName;
-            if(funcName == name && symTable->isParameterMatch(parameters))
-                return true;
+            ss << funcName; ss >> prv >> funcName;
+            if(funcName == name && symTable->isParameterMatch(parameters)) 
+            {
+                if(prv == "public") 
+                    return symTable;
+                inClass = true;
+            }
         }
     }
+
+    if(inClass)
+        yyerror(ERR(yylineno) + "Function " + name + " is not public\n");
 
     return false;
 }
@@ -743,37 +735,76 @@ void processUpdate(SymTable * symTable, std::string name, std::string type, valu
 {
     if(op == '=' && !symTable->updateSymbol(name, val) || op != '=' && !symTable->updateSymbol(name, val, op)) 
     {
-        yyerror("Variable " + name + " is of type " + symTable->getSymbolType(name) + " not of type " + extractTypeFromVariant(val));
+        yyerror(ERR(yylineno) + "Variable " + name + " is of type " + symTable->getSymbolType(name) + " not of type " + extractTypeFromVariant(val));
         exit(2);
     }
 }
 
-void processAssignmentStatement(SymTable * symTable, std::string name, std::string type, value val, char op)
+void processAssignmentStatement(arb * arb, std::string name, char op)
 {
+    if(arb->hasConflictingTypes())  
+    {
+        yyerror(ERR(yylineno) + "Invalid Expression in Assignment Statement!\n");
+        exit(7);
+    }
+    std::string type = arb->getExpressionType();
+    value val = arb->getExpressionResult();
+
+    std::string value = std::get<std::string>(val);
+    if(type == "int")
+        val = std::stoi(value);
+    else if(type == "bool") 
+    {
+        if(value == "true" || value[0] != '0') val = true;
+        else val = false;
+    }
+    else if(type == "char")
+        val = value[0];
+    else if(type == "float")
+        val = std::stof(value);
     if(validateStatement()) 
     {    
-        symTable = findSymTable(name);
+        SymTable * symTable = findSymTable(name);
         if(isSymbolValid(name, type)) 
-        {
+        {        
             if(op == '=')
                 processUpdate(symTable, name, type, val, op);
             else 
                 processUpdate(symTable, name, type, val, op);
         }
         else 
-        {
+        {                
             if(op != '=') 
-            {
-                yyerror("Undeclared variable " + name + ".Can't modify it!");
-                exit(3);
-            }
-            if(globalAreaOn) 
+                yyerror(ERR(yylineno) + "Undeclared variable " + name + ".Can't modify it!");
+            else if(globalAreaOn || declOn) 
                 unSymbols.push_back({name, val});
             else 
             { 
-                yyerror(std::string("Undeclared variable ") + name);
-                exit(3);
+                if(symTable == NULL)
+                    yyerror(ERR(yylineno) + std::string("Variable doesn't exist"));
+                else if(!symTable->isSymbolValid(name)) 
+                    yyerror(ERR(yylineno) + std::string("Undeclared variable ") + name);
+                else 
+                    yyerror(ERR(yylineno) + "Variable " + name + " is of type " + symTable->getSymbolType(name) + " not of type " + type);
             }
         }
     }
+}
+
+std::string fromValueToString(value val)
+{
+    if(std::holds_alternative<std::string>(val))
+        return std::get<std::string>(val);
+    std::stringstream ss;
+    std::string s;
+    if(std::holds_alternative<int>(val))
+        ss << get<int>(val);
+    else if(std::holds_alternative<float>(val))
+        ss << get<float>(val);
+    else if(std::holds_alternative<bool>(val)) 
+        ss << get<bool>(val);
+    else if(std::holds_alternative<char>(val))
+        ss << get<char>(val);
+    ss >> s;
+    return s;
 }

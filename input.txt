@@ -1,5 +1,5 @@
 int globalX = 5, globalY = 10;
-bool isActive = true;
+int isActive = 1;
 string s = "nice book";
 
 public class Calculator {
@@ -7,7 +7,7 @@ public class Calculator {
     public int add() {
         return a + b;
     }
-    protected int multiply() {
+    public int multiply() {
         return a * b;
     }
 
@@ -37,20 +37,22 @@ OPEN WALLET
     {
         int localX = 20, localY = 30;
         print(localX + localY); 
-
+        string text = "ana";
+        char t = '#';
+        print(t + t);
         Calculator calc;
         calc.a = localX;
         calc.b = localY;
         int sum = calc.add();
         int product = calc.multiply();
-
+        
         print(sum);        // Print the sum
         print(product);    // Print the product
         typeof(sum);       // Print the type of sum
-        
-        }    
-
-
+        }   
+    
+    typeof("ana" == "bogdan");
+    
     for (int i = 0; i < 10; i = i + 1) {
         results[i] = factorial(i);
     }
@@ -60,8 +62,8 @@ OPEN WALLET
     }
     
     int n = 20;
-
-    for(int d = 1, d2 = 2 * 2 + 3; d * d <= n && d2 <= 100; d2 -= 10, d *= 1000, d = d + d2) {
+    
+    for(int d = 1, d2 = 2 * 2 + 3; d * d <= n; d2 -= 10, d *= 1000, d = d + d2) {
         print("Buna Dimineata");
     }
 
@@ -70,8 +72,9 @@ OPEN WALLET
     calc.a = 30; calc.b = 69;
     print(calc.a); print(calc.b);
     int f = factorial(10);
-    
-    if (globalX < globalY && isActive != 0) {
+    print(f);
+
+    if globalX < globalY && isActive != 0 {
         print("Condition is true");
     } else if (globalX == globalY) {
         print("Global variables are equal");

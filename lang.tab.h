@@ -59,38 +59,32 @@ extern int yydebug;
     TYPE = 260,                    /* TYPE  */
     BOOLEAN_LITERAL = 261,         /* BOOLEAN_LITERAL  */
     STRING_LITERAL = 262,          /* STRING_LITERAL  */
-    OPEN_WALLET = 263,             /* OPEN_WALLET  */
-    CLOSE_WALLET = 264,            /* CLOSE_WALLET  */
-    PRINT = 265,                   /* PRINT  */
-    TYPEOF = 266,                  /* TYPEOF  */
-    PRIVATE = 267,                 /* PRIVATE  */
-    PUBLIC = 268,                  /* PUBLIC  */
-    PROTECTED = 269,               /* PROTECTED  */
-    CLASS = 270,                   /* CLASS  */
-    ACCESS = 271,                  /* ACCESS  */
-    AND = 272,                     /* AND  */
-    OR = 273,                      /* OR  */
-    EQ = 274,                      /* EQ  */
-    NEQ = 275,                     /* NEQ  */
-    LT = 276,                      /* LT  */
-    LEQ = 277,                     /* LEQ  */
-    HT = 278,                      /* HT  */
-    HEQ = 279,                     /* HEQ  */
-    IF = 280,                      /* IF  */
-    ELSE = 281,                    /* ELSE  */
-    ELSE_IF = 282,                 /* ELSE_IF  */
-    WHILE = 283,                   /* WHILE  */
-    FOR = 284,                     /* FOR  */
-    SCOPE_START = 285,             /* SCOPE_START  */
-    SCOPE_END = 286,               /* SCOPE_END  */
-    PLUS = 287,                    /* PLUS  */
-    MINUS = 288,                   /* MINUS  */
-    MUL = 289,                     /* MUL  */
-    DIV = 290,                     /* DIV  */
-    MOD = 291,                     /* MOD  */
-    INCR = 292,                    /* INCR  */
-    DECR = 293,                    /* DECR  */
-    RETURN = 294                   /* RETURN  */
+    FLOAT_LITERAL = 263,           /* FLOAT_LITERAL  */
+    CHAR_LITERAL = 264,            /* CHAR_LITERAL  */
+    OPEN_WALLET = 265,             /* OPEN_WALLET  */
+    CLOSE_WALLET = 266,            /* CLOSE_WALLET  */
+    PRINT = 267,                   /* PRINT  */
+    TYPEOF = 268,                  /* TYPEOF  */
+    PRIVATE = 269,                 /* PRIVATE  */
+    PUBLIC = 270,                  /* PUBLIC  */
+    PROTECTED = 271,               /* PROTECTED  */
+    CLASS = 272,                   /* CLASS  */
+    ACCESS = 273,                  /* ACCESS  */
+    AND = 274,                     /* AND  */
+    OR = 275,                      /* OR  */
+    IF = 276,                      /* IF  */
+    ELSE = 277,                    /* ELSE  */
+    ELSE_IF = 278,                 /* ELSE_IF  */
+    WHILE = 279,                   /* WHILE  */
+    FOR = 280,                     /* FOR  */
+    SCOPE_START = 281,             /* SCOPE_START  */
+    SCOPE_END = 282,               /* SCOPE_END  */
+    INCR = 283,                    /* INCR  */
+    DECR = 284,                    /* DECR  */
+    RETURN = 285,                  /* RETURN  */
+    BOOL_OPERATOR = 286,           /* BOOL_OPERATOR  */
+    ADD_OPERATOR = 287,            /* ADD_OPERATOR  */
+    MUL_OPERATOR = 288             /* MUL_OPERATOR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -99,13 +93,16 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 34 "lang.y"
+#line 41 "lang.y"
 
     char * strValue;
     int iValue;
     bool bValue;
+    float fValue;
+    char cValue;
+    class arb* tree;
 
-#line 109 "lang.tab.h"
+#line 106 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
