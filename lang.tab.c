@@ -636,9 +636,9 @@ static const yytype_int16 yyrline[] =
      382,   383,   384,   385,   386,   387,   388,   389,   390,   391,
      395,   399,   407,   415,   419,   426,   427,   428,   429,   430,
      434,   437,   440,   443,   448,   451,   454,   457,   461,   464,
-     467,   470,   473,   479,   491,   494,   507,   510,   513,   516,
-     519,   522,   525,   528,   535,   551,   552,   553,   555,   556,
-     557,   561,   563,   564,   565
+     467,   470,   473,   479,   492,   495,   508,   511,   514,   517,
+     520,   523,   526,   529,   536,   552,   553,   554,   556,   557,
+     558,   562,   564,   565,   566
 };
 #endif
 
@@ -1905,6 +1905,7 @@ yyreduce:
   case 123: /* INTEGER_EXPRESSION: LVALUE_ELEMENT ACCESS LVALUE_ELEMENT  */
 #line 479 "lang.y"
                                                           {
+                    std::cout << "HERE! " << (yyvsp[-2].strValue) << ' ' << (yyvsp[0].strValue) << '\n';
                     (yyval.iValue) = 0;
                     SymTable * symTable = findSymTable(std::string((yyvsp[0].strValue)));
                     if(symTable != NULL && symTable->isSymbolValid(std::string((yyvsp[0].strValue)))) 
@@ -1916,19 +1917,19 @@ yyreduce:
                     else 
                         yyerror(std::string("Undeclared variable ") + std::string((yyvsp[-2].strValue)));
                 }
-#line 1920 "lang.tab.c"
+#line 1921 "lang.tab.c"
     break;
 
   case 124: /* INTEGER_EXPRESSION: LVALUE_ELEMENT ACCESS FUNCTION_CALL  */
-#line 491 "lang.y"
+#line 492 "lang.y"
                                                       {
                     (yyval.iValue) = 0;
                 }
-#line 1928 "lang.tab.c"
+#line 1929 "lang.tab.c"
     break;
 
   case 125: /* INTEGER_EXPRESSION: LVALUE_ELEMENT  */
-#line 494 "lang.y"
+#line 495 "lang.y"
                                  {
                     SymTable * symTable = findSymTable(std::string((yyvsp[0].strValue)));
                     if(symTable != NULL && symTable->isSymbolValid(std::string((yyvsp[0].strValue)))) 
@@ -1942,75 +1943,75 @@ yyreduce:
                         (yyval.iValue) = 0;
                     }
             }
-#line 1946 "lang.tab.c"
+#line 1947 "lang.tab.c"
     break;
 
   case 126: /* INTEGER_EXPRESSION: FUNCTION_CALL  */
-#line 507 "lang.y"
+#line 508 "lang.y"
                             {
                 (yyval.iValue) = 0;
             }
-#line 1954 "lang.tab.c"
+#line 1955 "lang.tab.c"
     break;
 
   case 127: /* INTEGER_EXPRESSION: INTEGER  */
-#line 510 "lang.y"
+#line 511 "lang.y"
                       {
                 (yyval.iValue) = (yyvsp[0].iValue);
             }
-#line 1962 "lang.tab.c"
+#line 1963 "lang.tab.c"
     break;
 
   case 128: /* INTEGER_EXPRESSION: INTEGER_EXPRESSION PLUS INTEGER_EXPRESSION  */
-#line 513 "lang.y"
+#line 514 "lang.y"
                                                          {
                 (yyval.iValue) = (yyvsp[-2].iValue) + (yyvsp[0].iValue);
             }
-#line 1970 "lang.tab.c"
+#line 1971 "lang.tab.c"
     break;
 
   case 129: /* INTEGER_EXPRESSION: INTEGER_EXPRESSION MUL INTEGER_EXPRESSION  */
-#line 516 "lang.y"
+#line 517 "lang.y"
                                                         {
                 (yyval.iValue) = (yyvsp[-2].iValue) * (yyvsp[0].iValue);
             }
-#line 1978 "lang.tab.c"
+#line 1979 "lang.tab.c"
     break;
 
   case 130: /* INTEGER_EXPRESSION: INTEGER_EXPRESSION MINUS INTEGER_EXPRESSION  */
-#line 519 "lang.y"
+#line 520 "lang.y"
                                                           {
                 (yyval.iValue) = (yyvsp[-2].iValue) - (yyvsp[0].iValue);
             }
-#line 1986 "lang.tab.c"
+#line 1987 "lang.tab.c"
     break;
 
   case 131: /* INTEGER_EXPRESSION: INTEGER_EXPRESSION MOD INTEGER_EXPRESSION  */
-#line 522 "lang.y"
+#line 523 "lang.y"
                                                         {
                 (yyval.iValue) = (yyvsp[-2].iValue) % (yyvsp[0].iValue);
             }
-#line 1994 "lang.tab.c"
+#line 1995 "lang.tab.c"
     break;
 
   case 132: /* INTEGER_EXPRESSION: INTEGER_EXPRESSION DIV INTEGER_EXPRESSION  */
-#line 525 "lang.y"
+#line 526 "lang.y"
                                                         {
                 (yyval.iValue) = (yyvsp[-2].iValue) / (yyvsp[0].iValue);
             }
-#line 2002 "lang.tab.c"
+#line 2003 "lang.tab.c"
     break;
 
   case 133: /* INTEGER_EXPRESSION: '(' INTEGER_EXPRESSION ')'  */
-#line 528 "lang.y"
+#line 529 "lang.y"
                                          {
                 (yyval.iValue) = (yyvsp[-1].iValue);
             }
-#line 2010 "lang.tab.c"
+#line 2011 "lang.tab.c"
     break;
 
   case 134: /* FUNCTION_CALL: ID '(' PARAMETER_LIST ')'  */
-#line 536 "lang.y"
+#line 537 "lang.y"
 {
     if(validateStatement()) 
     {
@@ -2023,29 +2024,29 @@ yyreduce:
     (yyval.iValue) = 0;
     parameters.clear();
 }
-#line 2027 "lang.tab.c"
+#line 2028 "lang.tab.c"
     break;
 
   case 135: /* PARAMETER_LIST: PARAMETER  */
-#line 551 "lang.y"
+#line 552 "lang.y"
                            {parameters.push_back("int");}
-#line 2033 "lang.tab.c"
+#line 2034 "lang.tab.c"
     break;
 
   case 136: /* PARAMETER_LIST: PARAMETER ',' PARAMETER_LIST  */
-#line 552 "lang.y"
+#line 553 "lang.y"
                                               {parameters.push_back("int");}
-#line 2039 "lang.tab.c"
+#line 2040 "lang.tab.c"
     break;
 
   case 141: /* ARRAY_LITERAL: ID '[' INTEGER_EXPRESSION ']'  */
-#line 561 "lang.y"
+#line 562 "lang.y"
                                               { strcpy((yyval.strValue), (yyvsp[-3].strValue));}
-#line 2045 "lang.tab.c"
+#line 2046 "lang.tab.c"
     break;
 
 
-#line 2049 "lang.tab.c"
+#line 2050 "lang.tab.c"
 
       default: break;
     }
@@ -2238,7 +2239,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 569 "lang.y"
+#line 570 "lang.y"
 
 
 void yyerror(std::string s)
