@@ -89,7 +89,7 @@
     void processUpdate(SymTable * symTable, std::string name, std::string type, value val, char op);
     void processAssignmentStatement(SymTable * symTable, std::string name, std::string type, value val, char op);
 
-    std::string fromIntToString(int val);
+    std::string fromValueToString(value val);
     std::string extractValueFromValue(value val);
     std::string extractTypeFromVariant(value value);
     ClassSymTable * getClassSymTable(std::string name);
@@ -622,15 +622,15 @@ static const yytype_int16 yyrline[] =
      160,   169,   179,   182,   185,   194,   217,   223,   224,   227,
      230,   235,   236,   238,   239,   240,   241,   247,   249,   253,
      261,   262,   263,   267,   269,   271,   272,   273,   275,   277,
-     280,   281,   285,   287,   291,   295,   300,   301,   303,   312,
-     313,   315,   316,   318,   320,   326,   334,   336,   337,   339,
-     340,   341,   342,   345,   346,   351,   352,   353,   354,   355,
-     356,   359,   360,   362,   380,   381,   382,   384,   385,   386,
-     387,   388,   389,   390,   391,   392,   393,   394,   395,   396,
-     397,   398,   403,   407,   411,   419,   423,   433,   436,   439,
-     442,   446,   452,   463,   464,   477,   478,   480,   481,   482,
-     487,   503,   504,   505,   507,   508,   509,   513,   515,   516,
-     517
+     280,   281,   285,   287,   291,   295,   300,   301,   303,   311,
+     312,   314,   315,   317,   319,   325,   333,   335,   336,   338,
+     339,   340,   341,   344,   345,   350,   351,   352,   353,   354,
+     355,   358,   359,   361,   379,   380,   381,   383,   384,   385,
+     386,   387,   388,   389,   390,   391,   392,   393,   394,   395,
+     396,   397,   402,   406,   410,   418,   422,   432,   433,   434,
+     435,   436,   440,   450,   451,   463,   464,   465,   466,   467,
+     472,   488,   489,   490,   492,   493,   494,   498,   500,   501,
+     502
 };
 #endif
 
@@ -1633,36 +1633,35 @@ yyreduce:
 #line 303 "lang.y"
                                      {
     ifController = {true, 0};
-     ifController = {true, 0};
     if((yyvsp[0].tree)->hasConflictingTypes()==true) 
-                        std::cout << "Conflicts here" << '\n';
+                std::cout << "Conflicts here" << '\n';
     if((yyvsp[0].tree)->getExpressionType()!="bool" && (yyvsp[0].tree)->getExpressionResult()!="0" || (yyvsp[0].tree)->getExpressionType()=="bool" && (yyvsp[0].tree)->getExpressionResult()=="true") 
         ifController.second = 1;
 }
-#line 1643 "lang.tab.c"
+#line 1642 "lang.tab.c"
     break;
 
   case 64: /* ELSE_IF_STATEMENT: ELSE_IF BOOLEAN_EXPRESSION  */
-#line 320 "lang.y"
+#line 319 "lang.y"
                                                  {
     if(ifController.second) ifController.second = -1;
     if(((yyvsp[0].tree)->getExpressionType()!="bool" && (yyvsp[0].tree)->getExpressionResult()!="0" || (yyvsp[0].tree)->getExpressionType()=="bool" && (yyvsp[0].tree)->getExpressionResult()=="true") && ifController.second == 0)
         ifController.second = 1;
 }
-#line 1653 "lang.tab.c"
+#line 1652 "lang.tab.c"
     break;
 
   case 65: /* ELSE_STATEMENT: ELSE  */
-#line 326 "lang.y"
+#line 325 "lang.y"
                       {
     if(!ifController.second)
          ifController.second = 1;
 }
-#line 1662 "lang.tab.c"
+#line 1661 "lang.tab.c"
     break;
 
   case 83: /* CLASS_LITERAL: LVALUE_ELEMENT ACCESS ID  */
-#line 362 "lang.y"
+#line 361 "lang.y"
                                          {
     if(isClassMember((yyvsp[-2].strValue))) 
     {
@@ -1680,222 +1679,209 @@ yyreduce:
     }
     strcpy((yyval.strValue), (yyvsp[0].strValue));
 }
-#line 1684 "lang.tab.c"
+#line 1683 "lang.tab.c"
     break;
 
   case 87: /* ASSIGNMENT_STATEMENT: CLASS_LITERAL '=' INTEGER_EXPRESSION  */
-#line 384 "lang.y"
+#line 383 "lang.y"
                                                             {processAssignmentStatement(getClassSymTable(std::string((yyvsp[-2].strValue))), std::string((yyvsp[-2].strValue)), (yyvsp[0].tree)->getExpressionType(), value((yyvsp[0].tree)->getExpressionResult()), '='); }
-#line 1690 "lang.tab.c"
+#line 1689 "lang.tab.c"
     break;
 
   case 88: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT '=' INTEGER_EXPRESSION  */
-#line 385 "lang.y"
-                                                             { processAssignmentStatement(findSymTable(std::string((yyvsp[-2].strValue))), std::string((yyvsp[-2].strValue)), (yyvsp[0].tree)->getExpressionType(), value((yyvsp[0].tree)->getExpressionResult()), '='); }
-#line 1696 "lang.tab.c"
+#line 384 "lang.y"
+                                                             {processAssignmentStatement(findSymTable(std::string((yyvsp[-2].strValue))), std::string((yyvsp[-2].strValue)), (yyvsp[0].tree)->getExpressionType(), value((yyvsp[0].tree)->getExpressionResult()), '='); }
+#line 1695 "lang.tab.c"
     break;
 
   case 89: /* ASSIGNMENT_STATEMENT: CLASS_LITERAL '=' BOOLEAN_EXPRESSION  */
-#line 386 "lang.y"
+#line 385 "lang.y"
                                                             {processAssignmentStatement(getClassSymTable(std::string((yyvsp[-2].strValue))), std::string((yyvsp[-2].strValue)), (yyvsp[0].tree)->getExpressionType() , value((yyvsp[0].tree)->getExpressionResult()), '='); }
-#line 1702 "lang.tab.c"
+#line 1701 "lang.tab.c"
     break;
 
   case 90: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT '=' BOOLEAN_EXPRESSION  */
-#line 387 "lang.y"
+#line 386 "lang.y"
                                                              { processAssignmentStatement(findSymTable(std::string((yyvsp[-2].strValue))), std::string((yyvsp[-2].strValue)), (yyvsp[0].tree)->getExpressionType(), value((yyvsp[0].tree)->getExpressionResult()), '=');}
-#line 1708 "lang.tab.c"
+#line 1707 "lang.tab.c"
     break;
 
   case 93: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT ADD_OPERATOR '=' INTEGER_EXPRESSION  */
-#line 390 "lang.y"
+#line 389 "lang.y"
                                                                           { processAssignmentStatement(findSymTable(std::string((yyvsp[-3].strValue))), std::string((yyvsp[-3].strValue)), (yyvsp[0].tree)->getExpressionType(),  value((yyvsp[0].tree)->getExpressionResult()), std::string((yyvsp[-2].strValue))[0]);}
-#line 1714 "lang.tab.c"
+#line 1713 "lang.tab.c"
     break;
 
   case 94: /* ASSIGNMENT_STATEMENT: CLASS_LITERAL ADD_OPERATOR '=' INTEGER_EXPRESSION  */
-#line 391 "lang.y"
+#line 390 "lang.y"
                                                                           { processAssignmentStatement(getClassSymTable(std::string((yyvsp[-3].strValue))), std::string((yyvsp[-3].strValue)), (yyvsp[0].tree)->getExpressionType(),  value((yyvsp[0].tree)->getExpressionResult()), std::string((yyvsp[-2].strValue))[0]);}
-#line 1720 "lang.tab.c"
+#line 1719 "lang.tab.c"
     break;
 
   case 95: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT MUL_OPERATOR '=' INTEGER_EXPRESSION  */
-#line 392 "lang.y"
+#line 391 "lang.y"
                                                                           { processAssignmentStatement(findSymTable(std::string((yyvsp[-3].strValue))), std::string((yyvsp[-3].strValue)), (yyvsp[0].tree)->getExpressionType(),  value((yyvsp[0].tree)->getExpressionResult()), std::string((yyvsp[-2].strValue))[0]);}
-#line 1726 "lang.tab.c"
+#line 1725 "lang.tab.c"
     break;
 
   case 96: /* ASSIGNMENT_STATEMENT: CLASS_LITERAL MUL_OPERATOR '=' INTEGER_EXPRESSION  */
-#line 393 "lang.y"
+#line 392 "lang.y"
                                                                          { processAssignmentStatement(getClassSymTable(std::string((yyvsp[-3].strValue))), std::string((yyvsp[-3].strValue)), (yyvsp[0].tree)->getExpressionType(),  value((yyvsp[0].tree)->getExpressionResult()), std::string((yyvsp[-2].strValue))[0]);}
-#line 1732 "lang.tab.c"
+#line 1731 "lang.tab.c"
     break;
 
   case 101: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT '=' STRING_LITERAL  */
-#line 398 "lang.y"
+#line 397 "lang.y"
                                                          {processAssignmentStatement(findSymTable(std::string((yyvsp[-2].strValue))), std::string((yyvsp[-2].strValue)), "string", value((yyvsp[0].strValue)), '=');}
-#line 1738 "lang.tab.c"
+#line 1737 "lang.tab.c"
     break;
 
   case 102: /* PRINT_STATEMENT: PRINT '(' INTEGER_EXPRESSION ')'  */
-#line 403 "lang.y"
+#line 402 "lang.y"
                                                    {
                    if(validateStatement() && (yyvsp[-1].tree)->hasConflictingTypes()==0) 
                         std::cout << (yyvsp[-1].tree)->getExpressionResult() << '\n';
                 }
-#line 1747 "lang.tab.c"
+#line 1746 "lang.tab.c"
     break;
 
   case 103: /* PRINT_STATEMENT: PRINT '(' BOOLEAN_EXPRESSION ')'  */
-#line 407 "lang.y"
+#line 406 "lang.y"
                                                   {
                   if(validateStatement() && (yyvsp[-1].tree)->hasConflictingTypes()==0) 
                         std::cout << (yyvsp[-1].tree)->getExpressionResult() << '\n';
                 }
-#line 1756 "lang.tab.c"
+#line 1755 "lang.tab.c"
     break;
 
   case 104: /* PRINT_STATEMENT: PRINT '(' STRING_LITERAL ')'  */
-#line 411 "lang.y"
+#line 410 "lang.y"
                                                {
                     if(validateStatement()) {
                         std::cout << (yyvsp[-1].strValue) << '\n';
                     }
                 }
-#line 1766 "lang.tab.c"
+#line 1765 "lang.tab.c"
     break;
 
   case 105: /* TYPE_OF_STATEMENT: TYPEOF '(' INTEGER_EXPRESSION ')'  */
-#line 419 "lang.y"
+#line 418 "lang.y"
                                                       {
                     if(validateStatement() && (yyvsp[-1].tree)->hasConflictingTypes()==0) 
                         std::cout << (yyvsp[-1].tree)->getExpressionType() << '\n';
                 }
-#line 1775 "lang.tab.c"
+#line 1774 "lang.tab.c"
     break;
 
   case 106: /* TYPE_OF_STATEMENT: TYPEOF '(' BOOLEAN_EXPRESSION ')'  */
-#line 423 "lang.y"
+#line 422 "lang.y"
                                                       {
                     if(validateStatement() && (yyvsp[-1].tree)->hasConflictingTypes()==0) 
                         std::cout << (yyvsp[-1].tree)->getExpressionType() << '\n';
                 }
-#line 1784 "lang.tab.c"
+#line 1783 "lang.tab.c"
     break;
 
   case 107: /* BOOLEAN_EXPRESSION: BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION  */
-#line 433 "lang.y"
-                                                                {
-                        (yyval.tree) = new arb("&&","",(yyvsp[-2].tree),(yyvsp[0].tree));
-                    }
-#line 1792 "lang.tab.c"
+#line 432 "lang.y"
+                                                                {(yyval.tree) = new arb("&&","",(yyvsp[-2].tree),(yyvsp[0].tree));}
+#line 1789 "lang.tab.c"
     break;
 
   case 108: /* BOOLEAN_EXPRESSION: BOOLEAN_EXPRESSION OR BOOLEAN_EXPRESSION  */
-#line 436 "lang.y"
-                                                               {
-                        (yyval.tree) = new arb("||","",(yyvsp[-2].tree),(yyvsp[0].tree));
-                    }
-#line 1800 "lang.tab.c"
+#line 433 "lang.y"
+                                                               {(yyval.tree) = new arb("||","",(yyvsp[-2].tree),(yyvsp[0].tree));}
+#line 1795 "lang.tab.c"
     break;
 
   case 109: /* BOOLEAN_EXPRESSION: '(' BOOLEAN_EXPRESSION ')'  */
-#line 439 "lang.y"
-                                                 {
-                        (yyval.tree) = (yyvsp[-1].tree);
-                    }
-#line 1808 "lang.tab.c"
+#line 434 "lang.y"
+                                                 {(yyval.tree) = (yyvsp[-1].tree);}
+#line 1801 "lang.tab.c"
     break;
 
   case 110: /* BOOLEAN_EXPRESSION: INTEGER_EXPRESSION BOOL_OPERATOR INTEGER_EXPRESSION  */
-#line 443 "lang.y"
-                    {
-                    (yyval.tree) = new arb((yyvsp[-1].strValue),"",(yyvsp[-2].tree),(yyvsp[0].tree));
-                    }
-#line 1816 "lang.tab.c"
+#line 435 "lang.y"
+                                                                          {(yyval.tree) = new arb((yyvsp[-1].strValue),"",(yyvsp[-2].tree),(yyvsp[0].tree));}
+#line 1807 "lang.tab.c"
     break;
 
   case 111: /* BOOLEAN_EXPRESSION: BOOLEAN_LITERAL  */
-#line 446 "lang.y"
-                                      { 
-                        (yyval.tree) = new arb("true","bool");
-                    }
-#line 1824 "lang.tab.c"
+#line 436 "lang.y"
+                                      { (yyval.tree) = new arb(fromValueToString((yyvsp[0].bValue)),"bool");}
+#line 1813 "lang.tab.c"
     break;
 
   case 112: /* INTEGER_EXPRESSION: LVALUE_ELEMENT ACCESS LVALUE_ELEMENT  */
-#line 452 "lang.y"
+#line 440 "lang.y"
                                                             {
                         SymTable * symTable = findSymTable(std::string((yyvsp[0].strValue)));
                         if(symTable != NULL && symTable->isSymbolValid(std::string((yyvsp[0].strValue)))) 
                         {
                             value val = symTable->getSymbolValue(std::string((yyvsp[0].strValue)));
-                            if(std::holds_alternative<int>(val))
-                                (yyval.tree) = new arb(fromIntToString(std::get<int>(val)),"int");
+                            (yyval.tree) = new arb(fromValueToString(val), extractTypeFromVariant(val));
                         }
                         else 
                             yyerror(std::string("Undeclared variable ") + std::string((yyvsp[-2].strValue)));
                      }
-#line 1840 "lang.tab.c"
+#line 1828 "lang.tab.c"
     break;
 
   case 113: /* INTEGER_EXPRESSION: LVALUE_ELEMENT ACCESS FUNCTION_CALL  */
-#line 463 "lang.y"
+#line 450 "lang.y"
                                                           {(yyval.tree) = new arb("0","int");}
-#line 1846 "lang.tab.c"
+#line 1834 "lang.tab.c"
     break;
 
   case 114: /* INTEGER_EXPRESSION: LVALUE_ELEMENT  */
-#line 464 "lang.y"
+#line 451 "lang.y"
                                       {
                         SymTable * symTable = findSymTable(std::string((yyvsp[0].strValue)));
                         if(symTable != NULL && symTable->isSymbolValid(std::string((yyvsp[0].strValue)))) 
                         {
                             value val = symTable->getSymbolValue(std::string((yyvsp[0].strValue)));
-                            if(std::holds_alternative<int>(val)) 
-                                (yyval.tree) = new arb(fromIntToString(std::get<int>(val)), "int");
+                            (yyval.tree) = new arb(fromValueToString(val), extractTypeFromVariant(val));
                         }
                         else {
                             yyerror(std::string("Undeclared variable ") + std::string((yyvsp[0].strValue)));
                             (yyval.tree) = 0;
                         }
                         }
-#line 1864 "lang.tab.c"
+#line 1851 "lang.tab.c"
     break;
 
   case 115: /* INTEGER_EXPRESSION: FUNCTION_CALL  */
-#line 477 "lang.y"
+#line 463 "lang.y"
                                     {(yyval.tree) = new arb("0","int");}
-#line 1870 "lang.tab.c"
+#line 1857 "lang.tab.c"
     break;
 
   case 116: /* INTEGER_EXPRESSION: INTEGER  */
-#line 478 "lang.y"
-                              {
-                        (yyval.tree) = new arb(fromIntToString((yyvsp[0].iValue)),"int");}
-#line 1877 "lang.tab.c"
+#line 464 "lang.y"
+                              {(yyval.tree) = new arb(fromValueToString((yyvsp[0].iValue)),"int");}
+#line 1863 "lang.tab.c"
     break;
 
   case 117: /* INTEGER_EXPRESSION: INTEGER_EXPRESSION ADD_OPERATOR INTEGER_EXPRESSION  */
-#line 480 "lang.y"
-                                                                        { (yyval.tree) = new arb((yyvsp[-1].strValue),"",(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 1883 "lang.tab.c"
+#line 465 "lang.y"
+                                                                        { (yyval.tree) = new arb((yyvsp[-1].strValue),"int",(yyvsp[-2].tree),(yyvsp[0].tree)); }
+#line 1869 "lang.tab.c"
     break;
 
   case 118: /* INTEGER_EXPRESSION: INTEGER_EXPRESSION MUL_OPERATOR INTEGER_EXPRESSION  */
-#line 481 "lang.y"
-                                                                        { (yyval.tree) = new arb((yyvsp[-1].strValue),"",(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 1889 "lang.tab.c"
+#line 466 "lang.y"
+                                                                        { (yyval.tree) = new arb((yyvsp[-1].strValue),"int",(yyvsp[-2].tree),(yyvsp[0].tree)); }
+#line 1875 "lang.tab.c"
     break;
 
   case 119: /* INTEGER_EXPRESSION: '(' INTEGER_EXPRESSION ')'  */
-#line 482 "lang.y"
+#line 467 "lang.y"
                                                  {(yyval.tree) = (yyvsp[-1].tree);}
-#line 1895 "lang.tab.c"
+#line 1881 "lang.tab.c"
     break;
 
   case 120: /* FUNCTION_CALL: ID '(' PARAMETER_LIST ')'  */
-#line 488 "lang.y"
+#line 473 "lang.y"
 {
     if(validateStatement()) 
     {
@@ -1908,29 +1894,29 @@ yyreduce:
     (yyval.tree) = new arb("0","int");
     parameters.clear();
 }
-#line 1912 "lang.tab.c"
+#line 1898 "lang.tab.c"
     break;
 
   case 121: /* PARAMETER_LIST: PARAMETER  */
-#line 503 "lang.y"
+#line 488 "lang.y"
                            {parameters.push_back("int");}
-#line 1918 "lang.tab.c"
+#line 1904 "lang.tab.c"
     break;
 
   case 122: /* PARAMETER_LIST: PARAMETER ',' PARAMETER_LIST  */
-#line 504 "lang.y"
+#line 489 "lang.y"
                                               {parameters.push_back("int");}
-#line 1924 "lang.tab.c"
+#line 1910 "lang.tab.c"
     break;
 
   case 127: /* ARRAY_LITERAL: ID '[' INTEGER_EXPRESSION ']'  */
-#line 513 "lang.y"
+#line 498 "lang.y"
                                               { strcpy((yyval.strValue), (yyvsp[-3].strValue));}
-#line 1930 "lang.tab.c"
+#line 1916 "lang.tab.c"
     break;
 
 
-#line 1934 "lang.tab.c"
+#line 1920 "lang.tab.c"
 
       default: break;
     }
@@ -2123,7 +2109,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 521 "lang.y"
+#line 506 "lang.y"
 
 
 void yyerror(std::string s)
@@ -2313,7 +2299,7 @@ void processAssignmentStatement(SymTable * symTable, std::string name, std::stri
         val = std::stoi(value);
     else if(type == "bool") 
     {
-        if(value == "true") val = true;
+        if(value == "true" || value[0] != '0') val = true;
         else val = false;
     }
     else if(type == "char")
@@ -2348,10 +2334,20 @@ void processAssignmentStatement(SymTable * symTable, std::string name, std::stri
     }
 }
 
-std::string fromIntToString(int val)
+std::string fromValueToString(value val)
 {
     std::stringstream ss;
     std::string s;
-    ss << val; ss >> s;
+    if(std::holds_alternative<int>(val))
+        ss << get<int>(val);
+    else if(std::holds_alternative<float>(val))
+        ss << get<float>(val);
+    else if(std::holds_alternative<bool>(val)) 
+        ss << get<bool>(val);
+    else if(std::holds_alternative<char>(val))
+        ss << get<char>(val);
+    else 
+        ss << get<std::string>(val);
+    ss >> s;
     return s;
 }

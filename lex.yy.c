@@ -886,12 +886,12 @@ YY_RULE_SETUP
 case 11:
 YY_RULE_SETUP
 #line 37 "lang.l"
-{return AND;}
+{std::cout << "FOUND AND!\n"; yylval.strValue = strdup(yytext); return AND;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 38 "lang.l"
-{return OR;}
+{yylval.strValue = strdup(yytext); return OR;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP

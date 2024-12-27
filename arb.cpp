@@ -104,7 +104,7 @@ String arb::getExpressionType()
         {
             return leftType;
         }
-        else if (token == "&&" || token == "||" || token == ">=" || token == ">" || token == "==" || token == "<=" || token == "<")
+        else if (token == "&&" || token == "||" || token == ">=" || token == ">" || token == "==" || token == "<=" || token == "<" || token == "!=")
         {
             return "bool";
         }
@@ -116,16 +116,13 @@ String arb::getExpressionType()
 // Evaluarea expresiei
 String arb::getExpressionResult()
 {
-    if (isdigit(token[0]))
+    if (isdigit(token[0]) || token.size() > 1 && token[0] == '-' && isdigit(token[1]))
     {
         return token;
     }
-
     // Valori booleene
     if (token == "true" || token == "false")
-    {
         return token;
-    }
 
     // Operatorii unari
     if (isUnaryOperator(token))
@@ -209,6 +206,12 @@ String arb::getExpressionResult()
         else if (token == "<=")
         {
             if (stoi(leftResult) <= stoi(rightResult))
+                return "true";
+            return "false";
+        }
+        else if (token == "!=")
+        {
+            if (stoi(leftResult) != stoi(rightResult))
                 return "true";
             return "false";
         }

@@ -34,8 +34,8 @@ commentChr [/]
     yylval.strValue = strdup(yytext); 
     return PROTECTED; 
 }
-"&&" {return AND;}
-"||" {return OR;}
+"&&" {std::cout << "FOUND AND!\n"; yylval.strValue = strdup(yytext); return AND;}
+"||" {yylval.strValue = strdup(yytext); return OR;}
 "!=" { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 "==" { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
 ">"  { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext);  return BOOL_OPERATOR; }

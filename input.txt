@@ -62,18 +62,18 @@ OPEN WALLET
     int n = 20;
     print(n);
     
-    for(int d = 1, d2 = 2 * 2 + 3; d * d <= n && d2 <= 100; d2 -= 10, d *= 1000, d = d + d2) {
+    for(int d = 1, d2 = 2 * 2 + 3; d * d <= n; d2 -= 10, d *= 1000, d = d + d2) {
         print("Buna Dimineata");
     }
 
-    print("HERE");
     Calculator calc;
     calc.add();
     calc.a = 30; calc.b = 69;
     print(calc.a); print(calc.b);
     int f = factorial(10);
-    
-    if (globalX < globalY && isActive != 0) {
+    print(f);
+
+    if globalX < globalY && isActive != 0 {
         print("Condition is true");
     } else if (globalX == globalY) {
         print("Global variables are equal");
