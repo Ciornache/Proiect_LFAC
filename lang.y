@@ -19,6 +19,7 @@
     void processUpdate(SymTable * symTable, std::string name, std::string type, value val, char op);
     void processAssignmentStatement(SymTable * symTable, std::string name, std::string type, value val, char op);
 
+    std::string fromIntToString(int val);
     std::string extractValueFromValue(value val);
     std::string extractTypeFromVariant(value value);
     ClassSymTable * getClassSymTable(std::string name);
@@ -380,71 +381,22 @@ RETURN_STATEMENT : RETURN INTEGER_EXPRESSION
                  | RETURN BOOLEAN_EXPRESSION
                  | RETURN STRING_LITERAL
 
-ASSIGNMENT_STATEMENT : CLASS_LITERAL '=' INTEGER_EXPRESSION {processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), "int", value($3), '='); }
-                     | LVALUE_ELEMENT '=' INTEGER_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), "int", value($3), '='); }
-                     | CLASS_LITERAL '=' BOOLEAN_EXPRESSION {processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), "bool", value($3), '='); }
-                     | LVALUE_ELEMENT '=' BOOLEAN_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), "bool", value($3), '=');}
+ASSIGNMENT_STATEMENT : CLASS_LITERAL '=' INTEGER_EXPRESSION {processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), $3->getExpressionType(), value($3->getExpressionResult()), '='); }
+                     | LVALUE_ELEMENT '=' INTEGER_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), $3->getExpressionType(), value($3->getExpressionResult()), '='); }
+                     | CLASS_LITERAL '=' BOOLEAN_EXPRESSION {processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), $3->getExpressionType() , value($3->getExpressionResult()), '='); }
+                     | LVALUE_ELEMENT '=' BOOLEAN_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), $3->getExpressionType(), value($3->getExpressionResult()), '=');}
                      | CLASS_LITERAL '=' ARRAY_DECLARATION
                      | LVALUE_ELEMENT '=' ARRAY_DECLARATION
-                     | CLASS_LITERAL OPERATOR '=' INTEGER_EXPRESSION 
-                     | LVALUE_ELEMENT OPERATOR '=' INTEGER_EXPRESSION { processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), "int", value($4), std::string($2)[0]);}
+                     | LVALUE_ELEMENT ADD_OPERATOR '=' INTEGER_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), $4->getExpressionType(),  value($4->getExpressionResult()), std::string($2)[0]);}
+                     | CLASS_LITERAL ADD_OPERATOR '=' INTEGER_EXPRESSION  { processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), $4->getExpressionType(),  value($4->getExpressionResult()), std::string($2)[0]);}
+                     | LVALUE_ELEMENT MUL_OPERATOR '=' INTEGER_EXPRESSION { processAssignmentStatement(findSymTable(std::string($1)), std::string($1), $4->getExpressionType(),  value($4->getExpressionResult()), std::string($2)[0]);}
+                     | CLASS_LITERAL MUL_OPERATOR '=' INTEGER_EXPRESSION { processAssignmentStatement(getClassSymTable(std::string($1)), std::string($1), $4->getExpressionType(),  value($4->getExpressionResult()), std::string($2)[0]);}
                      | CLASS_LITERAL INCR
                      | LVALUE_ELEMENT INCR
                      | CLASS_LITERAL DECR
                      | LVALUE_ELEMENT DECR
                      | LVALUE_ELEMENT '=' STRING_LITERAL {processAssignmentStatement(findSymTable(std::string($1)), std::string($1), "string", value($3), '=');}
-RETURN_STATEMENT : RETURN INTEGER_EXPRESSION | RETURN BOOLEAN_EXPRESSION
 
-ASSIGNMENT_STATEMENT :  LVALUE_ELEMENT ACCESS ID '=' INTEGER_EXPRESSION
-                        | LVALUE_ELEMENT '=' INTEGER_EXPRESSION {
-                                if(validateStatement()) {
-                                    std::string symbol($1);
-                                    SymTable * symTable = findSymTable(symbol);
-                                    if(isSymbolValid(symbol, "int"))
-                                    {
-                                        value val = symTable->getSymbolValue(symbol);
-                                        symTable->updateSymbol(symbol, $3->getExpressionResult());
-                                    }
-                                    else {
-                                        if(globalAreaOn) 
-                                            unSymbols.push_back({$1, $3->getExpressionResult()});
-                                        else 
-                                            yyerror(std::string("Undeclared variable ") + std::string($1));
-                                    }
-                         }
-                    }
-                    |   LVALUE_ELEMENT ACCESS ID '=' BOOLEAN_EXPRESSION
-                    |   LVALUE_ELEMENT '=' BOOLEAN_EXPRESSION {
-                    
-                            if(validateStatement()) {
-                                std::string symbol($1);
-                                SymTable * symTable = findSymTable(symbol);
-                                if(isSymbolValid(symbol, "bool"))
-                                {
-                                    value val = symTable->getSymbolValue(symbol);
-                                    symTable->updateSymbol(symbol, $3->getExpressionResult());
-                                }
-                                else {
-                                    if(globalAreaOn) 
-                                        unSymbols.push_back({$1, value($3->getExpressionResult())});
-                                    else 
-                                        yyerror(std::string("Undeclared variable ") + std::string($1));
-                                }
-                        }
-                    }
-                    | LVALUE_ELEMENT ACCESS ID '=' ARRAY_DECLARATION
-                    | LVALUE_ELEMENT '=' ARRAY_DECLARATION
-                    | LVALUE_ELEMENT ACCESS ID ADD_OPERATOR '=' INTEGER_EXPRESSION
-                    | LVALUE_ELEMENT ACCESS ID MUL_OPERATOR '=' INTEGER_EXPRESSION
-                    | LVALUE_ELEMENT ADD_OPERATOR '=' INTEGER_EXPRESSION
-                    | LVALUE_ELEMENT MUL_OPERATOR '=' INTEGER_EXPRESSION
-                    | LVALUE_ELEMENT ACCESS ID INCR
-                    | LVALUE_ELEMENT INCR
-                    | LVALUE_ELEMENT ACCESS ID DECR
-                    | LVALUE_ELEMENT DECR
-                    | LVALUE_ELEMENT '=' STRING_LITERAL {
-                        std::cout << "HERE!\n";
-                    }
 /* Print Statement Grammar  */
 
 
@@ -497,66 +449,37 @@ BOOLEAN_EXPRESSION :  BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION {
 
 /*  Integer Expression Grammar      */
 
-INTEGER_EXPRESSION : LVALUE_ELEMENT ACCESS LVALUE_ELEMENT {
-                    $$ = new arb("0","int");
-                    SymTable * symTable = findSymTable(std::string($3));
-                    if(symTable != NULL && symTable->isSymbolValid(std::string($3))) 
-                    {
-                        value val = symTable->getSymbolValue(std::string($3));
-                        if(std::holds_alternative<int>(val))
-                            $$ = std::get<int>(val);
-                    }
-                    else 
-                        yyerror(std::string("Undeclared variable ") + std::string($1));
-                }
-                | LVALUE_ELEMENT ACCESS FUNCTION_CALL {
-                    $$ = 0;
-                }
-                | LVALUE_ELEMENT {
-                    SymTable * symTable = findSymTable(std::string($1));
-                    if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
-                    {
-                        value val = symTable->getSymbolValue(std::string($1));
-                        if(std::holds_alternative<int>(val))
-                            $$ = std::get<int>(val);
-                    }
-                    else {
-                        yyerror(std::string("Undeclared variable ") + std::string($1));
-                        $$ = 0;
-                    }
-                   | LVALUE_ELEMENT ACCESS FUNCTION_CALL {
-                    $$ = new arb("0","int");
-                   }
-                }
-            | LVALUE_ELEMENT{
-                    $$ = new arb("0","int");
-                // SymTable * symTable = findSymTable(std::string($1));
-                // if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
-                // {
-                //     value val = symTable->getSymbolValue(std::string($1));
-                //     if(std::holds_alternative<int>(val))
-                //         $$ = std::get<int>(val);
-                // }
-                // else {
-                //     yyerror(std::string("Undeclared variable ") + std::string($1));
-                //     $$ = 0;
-                // }
-            }
-            | FUNCTION_CALL {
-                    $$ = new arb("0","int");
-            }
-            | INTEGER {
-                    $$ = new arb("0","int");
-            }
-            | INTEGER_EXPRESSION ADD_OPERATOR INTEGER_EXPRESSION{
-            $$ = new arb($2,"",$1,$3);
-            }
-             | INTEGER_EXPRESSION MUL_OPERATOR INTEGER_EXPRESSION{
-            $$ = new arb($2,"",$1,$3);
-            }
-            | '(' INTEGER_EXPRESSION ')' {
-                    $$ = $2;
-            }
+INTEGER_EXPRESSION :   LVALUE_ELEMENT ACCESS LVALUE_ELEMENT {
+                        SymTable * symTable = findSymTable(std::string($3));
+                        if(symTable != NULL && symTable->isSymbolValid(std::string($3))) 
+                        {
+                            value val = symTable->getSymbolValue(std::string($3));
+                            if(std::holds_alternative<int>(val))
+                                $$ = new arb(fromIntToString(std::get<int>(val)),"int");
+                        }
+                        else 
+                            yyerror(std::string("Undeclared variable ") + std::string($1));
+                     }
+                    | LVALUE_ELEMENT ACCESS FUNCTION_CALL {$$ = new arb("0","int");}
+                    | LVALUE_ELEMENT  {
+                        SymTable * symTable = findSymTable(std::string($1));
+                        if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
+                        {
+                            value val = symTable->getSymbolValue(std::string($1));
+                            if(std::holds_alternative<int>(val)) 
+                                $$ = new arb(fromIntToString(std::get<int>(val)), "int");
+                        }
+                        else {
+                            yyerror(std::string("Undeclared variable ") + std::string($1));
+                            $$ = 0;
+                        }
+                        }
+                    | FUNCTION_CALL {$$ = new arb("0","int");}
+                    | INTEGER {
+                        $$ = new arb(fromIntToString($1),"int");}
+                    | INTEGER_EXPRESSION ADD_OPERATOR INTEGER_EXPRESSION{ $$ = new arb($2,"",$1,$3); }
+                    | INTEGER_EXPRESSION MUL_OPERATOR INTEGER_EXPRESSION{ $$ = new arb($2,"",$1,$3); }
+                    | '(' INTEGER_EXPRESSION ')' {$$ = $2;}
             ;
 
 /*  Function Call Grammar */
@@ -571,7 +494,7 @@ FUNCTION_CALL : ID '(' PARAMETER_LIST ')'
             exit(1);
         }
     } 
-    $$ = new arb($1,"int");
+    $$ = new arb("0","int");
     parameters.clear();
 }
 
@@ -779,6 +702,18 @@ void processUpdate(SymTable * symTable, std::string name, std::string type, valu
 
 void processAssignmentStatement(SymTable * symTable, std::string name, std::string type, value val, char op)
 {
+    std::string value = std::get<std::string>(val);
+    if(type == "int")
+        val = std::stoi(value);
+    else if(type == "bool") 
+    {
+        if(value == "true") val = true;
+        else val = false;
+    }
+    else if(type == "char")
+        val = value[0];
+    else if(type == "float")
+        val = std::stof(value);
     if(validateStatement()) 
     {    
         symTable = findSymTable(name);
@@ -805,4 +740,12 @@ void processAssignmentStatement(SymTable * symTable, std::string name, std::stri
             }
         }
     }
+}
+
+std::string fromIntToString(int val)
+{
+    std::stringstream ss;
+    std::string s;
+    ss << val; ss >> s;
+    return s;
 }
