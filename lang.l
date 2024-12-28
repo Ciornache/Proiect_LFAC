@@ -1,5 +1,6 @@
 %{
     #include "lang.tab.h"   
+    #include "symtable.h"
     #include <cstring> 
     #include <iostream>
     using namespace std;
@@ -36,7 +37,8 @@ commentChr [/]
 }
 "OPEN ORDER" {  return SCOPE_START;}
 "STOP LOSS" {  return SCOPE_END;}
-"int"|"float"|"char"|"compl"|"bool"|"string" {yylval.strValue = strdup(yytext); return TYPE;}
+"int"|"float"|"char"|"compl"|"bool"|"string" {yylval.strValue = strdup(yytext);    printf("I found type %s \n",yytext);
+ return TYPE;}
 "true" {yylval.bValue = true; return BOOLEAN_LITERAL;}
 "false" {yylval.bValue = false; return BOOLEAN_LITERAL;}
 '[^']+' {yylval.cValue = yytext[1]; return CHAR_LITERAL;}
@@ -76,6 +78,17 @@ commentChr [/]
  ,yytext); return ID;}
 {digit}+['.']{digit}+ {yylval.fValue = stof(std::string(yytext)); return FLOAT_LITERAL; }
 {digit}+ {yylval.iValue = atoi(yytext); return INTEGER;}
+{digit}+[+-]{digit}+i {
+    int realPart, imagPart;
+    char sign;
+    sscanf(yytext, "%d%c%d", &realPart, &sign, &imagPart);
+    if (sign == '-') {
+        imagPart = -imagPart;
+    }
+    yylval.complValue=new Complex(realPart,imagPart);
+    //printf("Found complex number: %d%+di\n", yylval.complValue.real, yylval.complValue.imag);
+    return COMPLEX_LITERAL; 
+}
 \n {yylineno++;}
 {commentChr}{commentChr}[^\n]*[\n] { }
 [;,=\(\)\[\]] {return yytext[0];}

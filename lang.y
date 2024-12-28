@@ -44,12 +44,13 @@
     bool bValue;
     float fValue;
     char cValue;
-    class Compl* c;
+    struct Complex* complValue;
     class arb* tree;
 }
 
 %token<strValue> ID
 %token<iValue> INTEGER
+%token<complValue> COMPLEX_LITERAL
 %token<strValue> TYPE
 %token<bValue> BOOLEAN_LITERAL 
 %token<strValue> STRING_LITERAL
@@ -223,6 +224,7 @@ LINE_DECLARATION : DECL_START IDSEQUENCE {
             {
                 for(auto [name, val] : unSymbols)
                 {
+                    printf("aiciiiiiiiiiiiiiiii\n");
                     symTable->addSymbol(name, $1);
                     processUpdate(symTable, name, std::string($1), val, '=');
                 }
@@ -240,7 +242,8 @@ IDSEQUENCE : ID_SEQUENCE_ELEMENT
            | ID_SEQUENCE_ELEMENT ',' IDSEQUENCE  
            ;
 
-ID_SEQUENCE_ELEMENT : ID {unSymbols.push_back({$1, 0});}
+ID_SEQUENCE_ELEMENT : ID {
+    printf("se adauga la %s valoarea 0",$1);unSymbols.push_back({$1, 0});}
                     | ASSIGNMENT_STATEMENT
 
 
@@ -443,6 +446,12 @@ TYPE_OF_STATEMENT : TYPEOF '(' EXPRESSION ')'
 /*         RValue Expressions Area           */
 
 EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
+
+                   | COMPLEX_LITERAL {
+                    if($1->imag>0)
+                    $$=new arb(to_string($1->real) + "+" + to_string($1->imag) + "i","compl");
+                    else  $$=new arb(to_string($1->real) + to_string($1->imag) + "i","compl"); 
+                    }
                     | STRING_LITERAL {$$ = new arb(fromValueToString(std::string($1)),"string");}
                     | BOOLEAN_LITERAL {$$ = new arb(fromValueToString($1),"bool");}
                     | FLOAT_LITERAL {$$ = new arb(fromValueToString($1),"float");}
@@ -463,11 +472,9 @@ EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
                     | LVALUE_ELEMENT ACCESS FUNCTION_CALL {$$ = $3;}
 
 EXPRESSION : EXPRESSION_LITERAL {$$ = $1;}
+           | '(' EXPRESSION ')' {$$=$2;}
            | EXPRESSION ADD_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
            | EXPRESSION MUL_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
-
-
-
 /*  Boolean Expression Grammar  */
 
 BOOLEAN_EXPRESSION :  BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION {$$ = new arb("&&","",$1,$3);}
@@ -736,6 +743,8 @@ void processUpdate(SymTable * symTable, std::string name, std::string type, valu
 {
     if(op == '=' && !symTable->updateSymbol(name, val) || op != '=' && !symTable->updateSymbol(name, val, op)) 
     {
+        printf("Aici la processupdate baga eroarea\n");
+        symTable->printVariables();
         yyerror(ERR(yylineno) + "Variable " + name + " is of type " + symTable->getSymbolType(name) + " not of type " + extractTypeFromVariant(val));
         exit(2);
     }
