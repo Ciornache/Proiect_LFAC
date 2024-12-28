@@ -44,6 +44,7 @@
     bool bValue;
     float fValue;
     char cValue;
+    class Compl* c;
     class arb* tree;
 }
 
@@ -56,7 +57,7 @@
 %token<cValue> CHAR_LITERAL
 %token OPEN_WALLET CLOSE_WALLET 
 %token PRINT TYPEOF
-%token PRIVATE PUBLIC PROTECTED
+%token PRIVATE PUBLIC PROTECTED TRANSACTION TYPE_ASSIGN
 %token CLASS ACCESS
 %token AND
 %token OR
@@ -99,7 +100,7 @@ S : DECLARATIONS MAIN_START MAIN MAIN_END {
 
 DECL_START : TYPE {declOn = true; strcpy($$, $1); }
 
-FUNC_START : DECL_START ID '(' { funcOn = true; funcSymTables.push_back(new SymTable(std::string($1), std::string($2))); declOn = false;}
+FUNC_START : TRANSACTION ID TYPE_ASSIGN DECL_START'(' { funcOn = true; funcSymTables.push_back(new SymTable(std::string($4), std::string($2))); declOn = false;}
 
 FUNCTION_DECLARATION : FUNC_START DECL_PARAMETER_SEQUENCE ')' { funcOn = false; }
 

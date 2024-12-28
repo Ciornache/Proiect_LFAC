@@ -68,23 +68,25 @@ extern int yydebug;
     PRIVATE = 269,                 /* PRIVATE  */
     PUBLIC = 270,                  /* PUBLIC  */
     PROTECTED = 271,               /* PROTECTED  */
-    CLASS = 272,                   /* CLASS  */
-    ACCESS = 273,                  /* ACCESS  */
-    AND = 274,                     /* AND  */
-    OR = 275,                      /* OR  */
-    IF = 276,                      /* IF  */
-    ELSE = 277,                    /* ELSE  */
-    ELSE_IF = 278,                 /* ELSE_IF  */
-    WHILE = 279,                   /* WHILE  */
-    FOR = 280,                     /* FOR  */
-    SCOPE_START = 281,             /* SCOPE_START  */
-    SCOPE_END = 282,               /* SCOPE_END  */
-    INCR = 283,                    /* INCR  */
-    DECR = 284,                    /* DECR  */
-    RETURN = 285,                  /* RETURN  */
-    BOOL_OPERATOR = 286,           /* BOOL_OPERATOR  */
-    ADD_OPERATOR = 287,            /* ADD_OPERATOR  */
-    MUL_OPERATOR = 288             /* MUL_OPERATOR  */
+    TRANSACTION = 272,             /* TRANSACTION  */
+    TYPE_ASSIGN = 273,             /* TYPE_ASSIGN  */
+    CLASS = 274,                   /* CLASS  */
+    ACCESS = 275,                  /* ACCESS  */
+    AND = 276,                     /* AND  */
+    OR = 277,                      /* OR  */
+    IF = 278,                      /* IF  */
+    ELSE = 279,                    /* ELSE  */
+    ELSE_IF = 280,                 /* ELSE_IF  */
+    WHILE = 281,                   /* WHILE  */
+    FOR = 282,                     /* FOR  */
+    SCOPE_START = 283,             /* SCOPE_START  */
+    SCOPE_END = 284,               /* SCOPE_END  */
+    INCR = 285,                    /* INCR  */
+    DECR = 286,                    /* DECR  */
+    RETURN = 287,                  /* RETURN  */
+    BOOL_OPERATOR = 288,           /* BOOL_OPERATOR  */
+    ADD_OPERATOR = 289,            /* ADD_OPERATOR  */
+    MUL_OPERATOR = 290             /* MUL_OPERATOR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -100,9 +102,10 @@ union YYSTYPE
     bool bValue;
     float fValue;
     char cValue;
+    class Compl* c;
     class arb* tree;
 
-#line 106 "lang.tab.h"
+#line 109 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

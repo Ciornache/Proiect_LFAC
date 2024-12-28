@@ -14,6 +14,28 @@ commentChr [/]
 %%
 "OPEN WALLET" {return OPEN_WALLET;}
 "CLOSE WALLET" {return CLOSE_WALLET;}
+"transaction" {printf("I found token transaction\n");return TRANSACTION;}
+"->" {printf("I found token ->\n");return TYPE_ASSIGN;}
+"asset"   { 
+    printf("I found token class\n");
+    return CLASS; 
+}
+"blockchain" { 
+    printf("I found token PRIVATE\n");
+    yylval.strValue = strdup(yytext);
+    return PRIVATE; 
+}
+"in circulation"  { 
+    printf("I found token PUBLIC\n");
+    yylval.strValue = strdup(yytext);
+    return PUBLIC; 
+}
+"value locked" {
+    yylval.strValue = strdup(yytext); 
+    return PROTECTED; 
+}
+"OPEN ORDER" {  return SCOPE_START;}
+"STOP LOSS" {  return SCOPE_END;}
 "int"|"float"|"char"|"compl"|"bool"|"string" {yylval.strValue = strdup(yytext); return TYPE;}
 "true" {yylval.bValue = true; return BOOLEAN_LITERAL;}
 "false" {yylval.bValue = false; return BOOLEAN_LITERAL;}
@@ -24,22 +46,7 @@ commentChr [/]
     strl[strlen(strl)-1] = 0; 
     yylval.strValue = strdup(strl); 
     return STRING_LITERAL;}
-"class"   { 
-    /*printf("I found token class\n");*/
-    return CLASS; 
-}
-"private" { 
-    yylval.strValue = strdup(yytext);
-    return PRIVATE; 
-}
-"public"  { 
-    yylval.strValue = strdup(yytext);
-    return PUBLIC; 
-}
-"protected" {
-    yylval.strValue = strdup(yytext); 
-    return PROTECTED; 
-}
+
 "&&" {yylval.strValue = strdup(yytext); return AND;}
 "||" {yylval.strValue = strdup(yytext); return OR;}
 "!=" { /*cout << "Found relational operator: " << yytext << endl;*/ yylval.strValue = strdup(yytext); return BOOL_OPERATOR; }
@@ -60,15 +67,13 @@ commentChr [/]
 "else" {return ELSE;}
 "while" {return WHILE;}
 "for" {return FOR;}
-"{" {  return SCOPE_START;}
-"}" {  return SCOPE_END;}
 "++" {return INCR;}
 "--" {return DECR;}
 "." {return ACCESS;}
 "return" {/*printf("FOUND RETURN\n");*/return RETURN;}
 
-{letter}({letter}|{digit}|{specialCharacters})* {yylval.strValue=strdup(yytext);/* printf("Found ID:%s \n"
- ,yytext);*/ return ID;}
+{letter}({letter}|{digit}|{specialCharacters})* {yylval.strValue=strdup(yytext); printf("Found ID:%s \n"
+ ,yytext); return ID;}
 {digit}+['.']{digit}+ {yylval.fValue = stof(std::string(yytext)); return FLOAT_LITERAL; }
 {digit}+ {yylval.iValue = atoi(yytext); return INTEGER;}
 \n {yylineno++;}
