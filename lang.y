@@ -473,6 +473,7 @@ EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
 
 EXPRESSION : EXPRESSION_LITERAL {$$ = $1;}
            | '(' EXPRESSION ')' {$$=$2;}
+           | ADD_OPERATOR EXPRESSION {$$= new arb($1,"",$2,nullptr);}
            | EXPRESSION ADD_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
            | EXPRESSION MUL_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
 /*  Boolean Expression Grammar  */

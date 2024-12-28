@@ -156,7 +156,7 @@ String arb::getExpressionResult()
         return token;
 
     // Operatorii unari
-    if (isUnaryOperator(token))
+    if (isUnaryOperator(token) && right == nullptr)
     {
         String operandResult = left->getExpressionResult();
         left->type = left->getExpressionType();

@@ -42,7 +42,7 @@ STOP LOSS
 int results = [10; 20], vector2 = [15;100];
 
 OPEN WALLET
-    print((2+3)-(100));
+    print(-(2*3+4));
     OPEN ORDER
 
         int localAssets = 20, localLiabilities = 30;
