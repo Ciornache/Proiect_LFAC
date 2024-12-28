@@ -228,10 +228,12 @@ void ClassSymTable::printClassAttributes()
     g << "######                   Class Attributes                   ######\n\n";
     for(auto [key, value] : symTable)
     {
+        if(!symExist[key])
+            continue;
         std::stringstream ss(key);
         std::string access, name;
         ss >> access >> name;
-        g << "Attribute Name: " << name << ", Type: " << value.type << ", Value: ";
+        g << "Attribute Name: " << name << ", Type: " << value.type << ", Access Type: " << access << ", Value: ";
         if(std::holds_alternative<int>(value.value)) 
             g << get<int>(value.value) << '\n';
         else if(std::holds_alternative<std::string>(value.value))
@@ -285,8 +287,15 @@ void ClassSymTable::addFuncSymTable(SymTable * funcSymTable)
 
 bool ClassSymTable::isSymbolInClass(std::string name)
 {
-    if(symExist[name]) 
-        return true;
+    for(auto [name2, value] : symExist)
+    {
+        std::stringstream ss;
+        std::string word, cpName = name2;
+        ss << cpName;
+        ss >> word >> word;
+        if(word == name && value) 
+            return true;
+    }
     for(unsigned int i = 0;i < this->funcSymTables.size(); i++) {
         if(this->funcSymTables[i]->getSymTableName() == name)
             return true;
@@ -301,27 +310,57 @@ std::vector<std::string> SymTable::getParameters()
 
 bool ClassSymTable::isSymbolValid(std::string s)
 {
+    if(symExist[s])
+        return true;
     for(auto [name, value] : symExist)
     {
         std::stringstream ss;
-        std::string newName;
-        newName = name; ss << newName;
-        ss >> newName >> newName;
-        if(newName == s) return true;
+        std::string word, cpName = name;
+        ss << cpName; ss >> word >> word;
+        if(value && s == word)
+            return true;
     }
     return false;
 }
 
 std::string ClassSymTable::getSymbolPrivacy(std::string s)
 {
-    std::stringstream ss;
-    std::string prv;
-    ss << s; ss >> prv;
-    return prv;
+    for(auto [name, value] : symExist)
+    {
+        std::stringstream ss;
+        std::string cpName = name, word, prv;
+        ss << cpName; ss >> prv >> word;
+        if(word == s)
+            return prv;
+    }
+    return "";
 }
 
 ClassSymTable::~ClassSymTable()
 {
     for(unsigned int j = 0;j < funcSymTables.size(); j++)
         delete funcSymTables[j];
+}
+
+ClassSymTable::ClassSymTable(ClassSymTable * classSymTable, std::string type, std::string name)
+{
+    this->symTable = classSymTable->symTable;
+    this->symExist = classSymTable->symExist;
+    this->parameters = classSymTable->parameters;
+    this->type = type; this->name = name;
+    for(unsigned int i = 0;i < classSymTable->funcSymTables.size(); i++) 
+        this->funcSymTables.push_back(new SymTable(classSymTable->funcSymTables[i]));
+}
+
+SymTable::SymTable(SymTable * symTable)
+{
+    this->symTable = symTable->symTable;
+    this->symExist = symTable->symExist;
+    this->parameters = symTable->parameters;
+    this->type = symTable->type; this->name = symTable->name;
+}
+
+std::map<std::string, bool> SymTable::getSymExist()
+{
+    return this->symExist;
 }

@@ -1,32 +1,44 @@
 int globalSupply = 5, globalDemand = 10;
 int isBullMarket = 1;
-string market = "GlobalExchange";
+bool isEthDead = true;
+string market = "GlobalExchange", emptyString;
+float defaultFloat;
 
-in circulation asset Calculator
+in_circulation asset Calculator
 OPEN ORDER
-    blockchain int precision = 20, leverage;
-    in circulation transaction add -> int ()
+    in_circulation int precision = 20, leverage;
+    in_circulation transaction add -> int ()
     OPEN ORDER
         return precision + leverage;
     STOP LOSS
-    in circulation transaction multiply -> int ()
+    in_circulation transaction multiply -> int ()
     OPEN ORDER
         return precision * leverage;
     STOP LOSS
 
-    blockchain transaction computeHash -> string (int a, int c, int b)
+    in_circulation transaction computeHash -> string (int a, int c, int b)
     OPEN ORDER
         return "0xCryptoHash";
     STOP LOSS
 
-    value locked transaction validateMarket -> bool (bool ok)
+    value_locked transaction validateMarket -> bool (bool ok)
     OPEN ORDER
         return isBullMarket;
     STOP LOSS
 
     transaction fee -> float ();
-
 STOP LOSS;
+
+blockchain asset Arbitrum
+OPEN ORDER
+    in_circulation float TVL = 30000000.0;
+    in_circulation transaction isMid -> bool ()
+    OPEN ORDER
+        return true;
+    STOP LOSS
+STOP LOSS;
+
+
 
 transaction factorial -> int (int n)
 OPEN ORDER
@@ -42,7 +54,9 @@ STOP LOSS
 int results = [10; 20], vector2 = [15;100];
 
 OPEN WALLET
-
+    print(emptyString);
+    print(defaultFloat);
+    typeof(defaultFloat);
     OPEN ORDER
 
         int localAssets = 20, localLiabilities = 30;
@@ -54,6 +68,12 @@ OPEN WALLET
         Calculator calc;
         calc.precision = localAssets;
         calc.leverage = localLiabilities;
+
+        Arbitrum arb;
+        arb.TVL = 345.12;
+        print(arb.TVL);
+
+        string hash = calc.computeHash(1, "bro", 3); /// Argumentul e de tip string cand ar trebui sa fie int si va da eroare
 
         int netGain = calc.add();
         int netProduct = calc.multiply();
@@ -84,11 +104,18 @@ OPEN WALLET
     STOP LOSS
 
     Calculator calc;
+    Calculator calc2;
     calc.add();
     calc.precision = 30;
+    calc.precision += 15;
+    calc.precision = 12;
+    calc.precision++;
+    calc.precision--;
     calc.leverage = 69;
+    calc2.leverage = 5;
     print(calc.precision);
     print(calc.leverage);
+    print(calc2.leverage);
     int result = factorial(10);
     print(result);
 

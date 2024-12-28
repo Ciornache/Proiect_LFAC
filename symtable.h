@@ -64,6 +64,7 @@ class SymTable
         std::string getSymbolType(std::string s);
         SymTable(std::string type, std::string name) : type(type), name(name) {};
         SymTable() {};
+        SymTable(SymTable * symTable);
         std::string getSymTableName();
         std::string getSymTableType();
         bool isSymbolClassMember(std::string name);
@@ -72,6 +73,7 @@ class SymTable
         void printFunctionDescription();
         void setFunctionName(std::string name);
         std::vector<std::string> getParameters();
+        std::map<std::string, bool> getSymExist();
 };
 
 class ClassSymTable : public SymTable
@@ -89,6 +91,7 @@ class ClassSymTable : public SymTable
         ClassSymTable(std::string type, std::string name);
         ClassSymTable();    
         ~ClassSymTable();
+        ClassSymTable(ClassSymTable * classSymTable, std::string type, std::string name);
 };
 
 value applyOperation(value val, value val2, char op);

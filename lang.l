@@ -25,12 +25,12 @@ commentChr [/]
     yylval.strValue = strdup(yytext);
     return PRIVATE; 
 }
-"in circulation"  { 
+"in_circulation"  { 
     printf("I found token PUBLIC\n");
     yylval.strValue = strdup(yytext);
     return PUBLIC; 
 }
-"value locked" {
+"value_locked" {
     yylval.strValue = strdup(yytext); 
     return PROTECTED; 
 }

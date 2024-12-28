@@ -28,8 +28,9 @@
     bool isClassMember(std::string name);
     SymTable * findSymTable(std::string symbol);
     SymTable * getFunctionSymTable(std::string name);
+    ClassSymTable * getClassIdSymTable(std::string s);
 
-
+    std::string lastType;
     SymTable * globalSymTable;
     std::vector<std::pair<std::string, value>> unSymbols;
     std::pair<bool, int> ifController;
@@ -66,7 +67,7 @@
 %token INCR DECR
 %token RETURN 
 %token<strValue> BOOL_OPERATOR ADD_OPERATOR MUL_OPERATOR
-%type<tree> FUNCTION_CALL BOOLEAN_EXPRESSION EXPRESSION_LITERAL EXPRESSION
+%type<tree> FUNCTION_CALL BOOLEAN_EXPRESSION EXPRESSION_LITERAL EXPRESSION PARAMETER
 %type<strValue> ARRAY_LITERAL LVALUE_ELEMENT DECL_START
 %type<strValue> PRIVATE PUBLIC PROTECTED ACCESS_MODIFIER CLASS_BEGIN_ELEMENT CLASS_LITERAL
 
@@ -84,8 +85,24 @@
 
 /*  Start Area  */
 
-MAIN_START : OPEN_WALLET {globalAreaOn = false; }
-MAIN_END : CLOSE_WALLET
+MAIN_START : OPEN_WALLET {symTables.push_back(new SymTable); globalAreaOn = false; }
+MAIN_END : CLOSE_WALLET {
+    SymTable * symTable = symTables.back();
+    std::map<std::string, bool> symExist = symTable->getSymExist();
+    int count = 0;
+    for(auto [name, value] : symExist) {
+        if(value == true && getClassIdSymTable(name) != NULL)
+            count++;
+    }       
+    for(unsigned int j = 0;j < count; j++) 
+    {
+        ClassSymTable * classSymTable = classSymTables.back();
+        delete classSymTable;
+        classSymTables.pop_back();
+    }
+    delete symTable;
+    symTables.pop_back();
+}
 
 S : DECLARATIONS MAIN_START MAIN MAIN_END {
         printf("Program compiled succesfully!\n");
@@ -98,9 +115,9 @@ S : DECLARATIONS MAIN_START MAIN MAIN_END {
 
 /*  Function Declaration Grammar   */
 
-DECL_START : TYPE {declOn = true; strcpy($$, $1); }
+DECL_START : TYPE {declOn = true; lastType = std::string($1); strcpy($$, $1); }
 
-FUNC_START : TRANSACTION ID TYPE_ASSIGN DECL_START'(' { funcOn = true; funcSymTables.push_back(new SymTable(std::string($4), std::string($2))); declOn = false;}
+FUNC_START : TRANSACTION ID TYPE_ASSIGN DECL_START '(' {  funcOn = true; funcSymTables.push_back(new SymTable(std::string($4), std::string($2))); declOn = false;}
 
 FUNCTION_DECLARATION : FUNC_START DECL_PARAMETER_SEQUENCE ')' { funcOn = false; }
 
@@ -146,6 +163,7 @@ CLASS_MEMBER : ACCESS_MODIFIER DECL_START IDSEQUENCE ';' {
                     processUpdate(symTable, className, std::string($2), value, '=');
                 }
                 declOn = false;
+                unSymbols.clear();
             }
              | ACCESS_MODIFIER FUNCTION_DECLARATION ';' {
                     ClassSymTable * symTable = classSymTables.back();
@@ -160,10 +178,11 @@ CLASS_MEMBER : ACCESS_MODIFIER DECL_START IDSEQUENCE ';' {
                 ClassSymTable * symTable = classSymTables.back();
                 for(auto [name, value] : unSymbols) 
                 {
-                    std::string className = "private " + name;
+                    std::string className = "blockchain " + name;
                     symTable->addSymbol(className, std::string($1));
                     processUpdate(symTable, className, std::string($1), value, '=');
                 }
+                unSymbols.clear();
                 declOn = false;
              }
              | FUNCTION_DECLARATION ';' {
@@ -171,7 +190,7 @@ CLASS_MEMBER : ACCESS_MODIFIER DECL_START IDSEQUENCE ';' {
                     SymTable * funcSymTable = funcSymTables.back();
                     funcSymTables.pop_back();
                     std::string funcName = funcSymTable->getSymTableName();
-                    funcName = "private " + funcName;
+                    funcName = "blockchain " + funcName;
                     funcSymTable->setFunctionName(funcName);
                     symTable->addFuncSymTable(funcSymTable);
              }
@@ -180,7 +199,7 @@ CLASS_MEMBER : ACCESS_MODIFIER DECL_START IDSEQUENCE ';' {
                     SymTable * funcSymTable = funcSymTables.back();
                     funcSymTables.pop_back();
                     std::string funcName = funcSymTable->getSymTableName();
-                    funcName = "private " + funcName;
+                    funcName = "blockchain " + funcName;
                     funcSymTable->setFunctionName(funcName);
                     symTable->addFuncSymTable(funcSymTable);
              }
@@ -230,9 +249,16 @@ LINE_DECLARATION : DECL_START IDSEQUENCE {
             unSymbols.clear();
             declOn = false;
         }
-        | ID ID {
-            SymTable * symTable = symTables.back();
-            symTable->addSymbol(std::string($2), std::string($1));
+        | ID ID  {
+            ClassSymTable * classSymTable = getClassSymTable(std::string($1));
+            if(classSymTable == NULL)
+                yyerror(ERR(yylineno) + "Undefined identifier " + std::string($1) + "for class type\n");
+            else 
+            {
+                SymTable * symTable = symTables.back();
+                symTable->addSymbol(std::string($2), std::string($1));
+                classSymTables.push_back(new ClassSymTable(classSymTable, std::string($1), std::string($2)));
+            }
         }
 
 
@@ -240,7 +266,7 @@ IDSEQUENCE : ID_SEQUENCE_ELEMENT
            | ID_SEQUENCE_ELEMENT ',' IDSEQUENCE  
            ;
 
-ID_SEQUENCE_ELEMENT : ID {unSymbols.push_back({$1, 0});}
+ID_SEQUENCE_ELEMENT : ID {unSymbols.push_back({$1, SymTable::getDefaultValue(lastType)});}
                     | ASSIGNMENT_STATEMENT
 
 
@@ -266,6 +292,18 @@ BEGIN_SCOPE : SCOPE_START {
 
 END_SCOPE : SCOPE_END {
     SymTable * symTable = symTables.back();
+    std::map<std::string, bool> symExist = symTable->getSymExist();
+    int count = 0;
+    for(auto [name, value] : symExist) {
+        if(value == true && getClassIdSymTable(name) != NULL)
+            count++;
+    }       
+    for(unsigned int j = 0;j < count; j++) 
+    {
+        ClassSymTable * classSymTable = classSymTables.back();
+        delete classSymTable;
+        classSymTables.pop_back();
+    }
     delete symTable;
     symTables.pop_back();
 }
@@ -386,11 +424,16 @@ CLASS_LITERAL : LVALUE_ELEMENT ACCESS ID {
         {
             if(!classSymTable->isSymbolInClass(std::string($3))) 
                 yyerror(ERR(yylineno) + std::string("Identifier " + std::string($3) + " doesn't exist in class " + std::string($1)));
-            else if(classSymTable->getSymbolPrivacy(std::string($3)) != "public")
+            else if(classSymTable->getSymbolPrivacy(std::string($3)) != "in_circulation")
                 yyerror(ERR(yylineno) + "Identifier " + std::string($3) + " is " + classSymTable->getSymbolPrivacy(std::string($3)) + " in the context of class " + std::string($1));
         }
     }
-    strcpy($$, $3);
+    char className[101];
+    memset(className, false, sizeof(className));
+    strcpy(className, $1);
+    className[strlen(className)] = ' ';
+    strcat(className, $3);
+    strcpy($$, className);
 }
 
 RETURN_STATEMENT : RETURN EXPRESSION
@@ -400,8 +443,8 @@ ASSIGNMENT_STATEMENT : LVALUE_ELEMENT '=' EXPRESSION { processAssignmentStatemen
                      | LVALUE_ELEMENT '=' ARRAY_DECLARATION {if(declOn) unSymbols.push_back({std::string($1), 0});}
                      | LVALUE_ELEMENT ADD_OPERATOR '=' EXPRESSION { processAssignmentStatement($4, std::string($1), std::string($2)[0]);}
                      | LVALUE_ELEMENT MUL_OPERATOR '=' EXPRESSION { processAssignmentStatement($4, std::string($1), std::string($2)[0]);}
-                     | LVALUE_ELEMENT INCR
-                     | LVALUE_ELEMENT DECR
+                     | LVALUE_ELEMENT INCR {processAssignmentStatement(new arb("1","int"), std::string($1), '+');}
+                     | LVALUE_ELEMENT DECR {processAssignmentStatement(new arb("1","int"), std::string($1), '-');}
 
 /* Print Statement Grammar  */
 
@@ -448,15 +491,31 @@ EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
                     | FLOAT_LITERAL {$$ = new arb(fromValueToString($1),"float");}
                     | CHAR_LITERAL {$$ = new arb(fromValueToString($1),"char");}
                     | LVALUE_ELEMENT {
-                        SymTable * symTable = findSymTable(std::string($1));
-                        if(symTable != NULL && symTable->isSymbolValid(std::string($1))) 
-                        {
-                            value val = symTable->getSymbolValue(std::string($1));
+                        std::stringstream ss;
+                        std::string word;
+                        int count = 0;
+                        ss << std::string($1);
+                        while(ss >> word)
+                            count++;
+                        if(count == 2) {
+                            ss.clear();
+                            ss << std::string($1);
+                            std::string className, attribute;
+                            ss >> className >> attribute;
+                            SymTable * classSymTable = getClassIdSymTable(className); 
+                            value val = classSymTable->getSymbolValue("in_circulation "+attribute);
                             $$ = new arb(fromValueToString(val), extractTypeFromVariant(val));
-                        }
-                        else {
-                            yyerror(ERR(yylineno) + std::string("Undeclared variable ") + std::string($1));
-                            $$ = new arb("0", "int");
+                        } else {
+                            SymTable * symTable = findSymTable(std::string($1));
+                            if(symTable != NULL) 
+                            {
+                                value val = symTable->getSymbolValue(std::string($1));
+                                $$ = new arb(fromValueToString(val), extractTypeFromVariant(val));
+                            }
+                            else {                           
+                                yyerror(ERR(yylineno) + std::string("Undeclared variable ") + std::string($1));
+                                $$ = new arb("0", "int");
+                            }
                         }
                     }
                     | FUNCTION_CALL {$$ = $1;}
@@ -465,6 +524,7 @@ EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
 EXPRESSION : EXPRESSION_LITERAL {$$ = $1;}
            | EXPRESSION ADD_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
            | EXPRESSION MUL_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
+           | '(' EXPRESSION ')' {$$ = $2;}
 
 
 
@@ -501,11 +561,11 @@ FUNCTION_CALL : ID '(' PARAMETER_LIST ')'
 
 /// TODO : Use syntax tree to refactor this grammar and add the correct data type to parameters array
 
-PARAMETER_LIST : PARAMETER {parameters.push_back("int");}
-               | PARAMETER ',' PARAMETER_LIST {parameters.push_back("int");}
+PARAMETER_LIST : PARAMETER {parameters.push_back($1->getExpressionType());}
+               | PARAMETER ',' PARAMETER_LIST {parameters.push_back($1->getExpressionType());}
                | /* empty */
 
-PARAMETER : EXPRESSION
+PARAMETER : EXPRESSION {$$ = $1;}
 
 /* Array Grammar */
 
@@ -522,7 +582,7 @@ ARRAY_DECLARATION : '[' EXPRESSION ';' EXPRESSION ']'
 void yyerror(std::string s)
 {
     std::ofstream g("errors.txt", ios_base::app);
-    g << s;
+    g << s << '\n';
     g.close();
 }
 
@@ -593,18 +653,29 @@ bool validateStatement()
     return false;
 }
 
+ClassSymTable * getClassIdSymTable(std::string s)
+{
+    for(int j = classSymTables.size() - 1; j >= 0; --j)
+    {
+        ClassSymTable * symTable = classSymTables[j];
+        if(symTable->getSymTableName() == s)
+            return symTable;
+    }
+    return NULL;
+}
+
 SymTable * findSymTable(std::string s)
 {
-    for(int j = symTables.size() - 1;j >= 0; --j)
+    for(int j = classSymTables.size() - 1; j >= 0; --j)
     {
-        SymTable * symTable = symTables[j];
+        ClassSymTable * symTable = classSymTables[j];
         if(symTable->isSymbolValid(s))
             return symTable;
     }
 
-    for(int j = classSymTables.size() - 1; j >= 0; --j)
+    for(int j = symTables.size() - 1;j >= 0; --j)
     {
-        SymTable * symTable = classSymTables[j];
+        SymTable * symTable = symTables[j];
         if(symTable->isSymbolValid(s))
             return symTable;
     }
@@ -664,9 +735,8 @@ bool validateFunction(std::string name, std::vector<std::string> parameters)
 
     if(funcSymTables.back()->getSymTableName() == name && funcSymTables.back()->isParameterMatch(parameters))
         return true;
-    
-    bool inClass = false;
 
+    bool inClass = false;
     for(unsigned int j = 0; j < classSymTables.size(); j++)
     {
         std::vector<SymTable*> funcSymTables = classSymTables[j]->getFuncSymTables();
@@ -674,11 +744,11 @@ bool validateFunction(std::string name, std::vector<std::string> parameters)
         {
             SymTable * symTable = funcSymTables[i];
             std::string funcName = symTable->getSymTableName(), prv;
-            std::stringstream ss;
+            std::stringstream ss;           
             ss << funcName; ss >> prv >> funcName;
             if(funcName == name && symTable->isParameterMatch(parameters)) 
             {
-                if(prv == "public") 
+                if(prv == "in_circulation") 
                     return symTable;
                 inClass = true;
             }
@@ -735,10 +805,7 @@ std::string extractTypeFromVariant(value value)
 void processUpdate(SymTable * symTable, std::string name, std::string type, value val, char op)
 {
     if(op == '=' && !symTable->updateSymbol(name, val) || op != '=' && !symTable->updateSymbol(name, val, op)) 
-    {
         yyerror(ERR(yylineno) + "Variable " + name + " is of type " + symTable->getSymbolType(name) + " not of type " + extractTypeFromVariant(val));
-        exit(2);
-    }
 }
 
 void processAssignmentStatement(arb * arb, std::string name, char op)
@@ -746,7 +813,7 @@ void processAssignmentStatement(arb * arb, std::string name, char op)
     if(arb->hasConflictingTypes())  
     {
         yyerror(ERR(yylineno) + "Invalid Expression in Assignment Statement!\n");
-        exit(7);
+        return;
     }
     std::string type = arb->getExpressionType();
     value val = arb->getExpressionResult();
@@ -764,15 +831,30 @@ void processAssignmentStatement(arb * arb, std::string name, char op)
     else if(type == "float")
         val = std::stof(value);
     if(validateStatement()) 
-    {    
-        SymTable * symTable = findSymTable(name);
-        if(isSymbolValid(name, type)) 
-        {        
-            if(op == '=')
-                processUpdate(symTable, name, type, val, op);
-            else 
-                processUpdate(symTable, name, type, val, op);
+    {   
+        SymTable * symTable;
+        std::stringstream ss;
+        std::string word;
+        int count = 0;
+        ss << name;
+        while(ss >> word)
+            count++;
+        if(count == 2) 
+        {
+            ss.clear();
+            ss << name;
+            std::string className, attribute;
+            ss >> className >> attribute;
+            name = attribute;
+            ClassSymTable * classSymTable = getClassIdSymTable(className);
+            if(!classSymTable->isSymbolValid(name) || classSymTable->getSymbolPrivacy(name) != "in_circulation")
+                return;
+            name = "in_circulation " + name;
+            symTable = classSymTable;
         }
+        else symTable = findSymTable(name);
+        if(isSymbolValid(name, type))    
+            processUpdate(symTable, name, type, val, op);
         else 
         {                
             if(op != '=') 
