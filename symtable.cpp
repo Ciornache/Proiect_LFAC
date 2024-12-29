@@ -370,3 +370,40 @@ std::map<std::string, bool> SymTable::getSymExist()
 {
     return this->symExist;
 }
+
+std::string SymTable::extractTypeFromVariant(value value)
+{
+    if(std::holds_alternative<int>(value)) 
+        return "int";
+    else if(std::holds_alternative<std::string>(value))
+        return "string";
+    else if(std::holds_alternative<float>(value))
+        return "float";
+    else if(std::holds_alternative<char>(value))
+        return "char";
+    else if(std::holds_alternative<Complex>(value))
+        return "compl";
+    else 
+        return "bool";
+}
+
+
+std::string SymTable::fromValueToString(value val)
+{
+    if(std::holds_alternative<std::string>(val))
+        return std::get<std::string>(val);
+    std::stringstream ss;
+    std::string s;
+    if(std::holds_alternative<int>(val))
+        ss << get<int>(val);
+    else if(std::holds_alternative<float>(val))
+        ss << get<float>(val);
+    else if(std::holds_alternative<bool>(val)) 
+        ss << get<bool>(val);
+    else if(std::holds_alternative<char>(val))
+        ss << get<char>(val);
+    else if(std::holds_alternative<Complex>(val))
+        ss << get<Complex>(val);
+    ss >> s;
+    return s;
+}

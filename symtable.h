@@ -75,6 +75,9 @@ class SymTable
         std::string type, name;
     public:
         static value getDefaultValue(std::string type);
+        static std::string fromValueToString(value val);
+        static std::string extractTypeFromVariant(value value);
+        
         value getSymbolValue(std::string s);
         Symbol getSymbol(std::string s);
         virtual bool isSymbolValid(std::string s);

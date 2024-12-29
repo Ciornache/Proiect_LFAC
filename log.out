@@ -26,3 +26,9 @@ Method Name: validateMarket, Return Type: bool, Access Type: value_locked. Metho
 Parameter List: bool 
 
 Method Name: fee, Return Type: float, Access Type: blockchain. Method Header contains 0 parameters.
+Class name: Arbitrum
+######                   Class Attributes                   ######
+
+Attribute Name: TVL, Type: float, Access Type: in_circulation, Value: 3e+07
+
+Method Name: isMid, Return Type: bool, Access Type: in_circulation. Method Header contains 0 parameters.

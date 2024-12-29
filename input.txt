@@ -52,9 +52,6 @@ STOP LOSS
 int results = [10; 20], vector2 = [15;100];
 
 OPEN WALLET
-    print(emptyString);
-    print(defaultFloat);
-    typeof(defaultFloat);
     OPEN ORDER
         int localAssets = 20, localLiabilities = 30;
         print(localAssets + localLiabilities);
