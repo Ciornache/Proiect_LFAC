@@ -106,9 +106,10 @@
     std::vector<SymTable*> symTables, funcSymTables;
     std::vector<ClassSymTable*> classSymTables;
     std::vector<std::string> parameters;
+    ClassSymTable * getClassIdSymTable(std::string s);
+    std::string lastType;
 
-
-#line 112 "lang.tab.c"
+#line 113 "lang.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -630,19 +631,19 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    88,    88,    89,    91,   102,   104,   106,   108,   110,
-     116,   122,   129,   130,   132,   134,   135,   137,   138,   141,
-     151,   160,   170,   179,   188,   198,   199,   200,   210,   235,
-     241,   242,   245,   247,   252,   253,   255,   256,   257,   258,
-     264,   266,   270,   278,   279,   280,   284,   286,   288,   289,
-     290,   292,   294,   297,   298,   302,   304,   308,   312,   317,
-     318,   320,   329,   330,   332,   333,   335,   337,   345,   353,
-     355,   356,   358,   359,   360,   361,   364,   365,   370,   371,
-     372,   373,   374,   375,   378,   379,   380,   382,   399,   400,
-     402,   403,   404,   405,   406,   407,   412,   419,   429,   436,
-     448,   450,   455,   456,   457,   458,   459,   471,   472,   474,
-     475,   476,   477,   478,   481,   482,   483,   484,   491,   512,
-     513,   514,   516,   520,   522,   523,   524
+       0,    89,    89,    90,   108,   119,   120,   121,   123,   125,
+     131,   137,   144,   145,   147,   149,   150,   152,   153,   156,
+     167,   176,   187,   196,   205,   215,   216,   217,   227,   252,
+     265,   266,   269,   270,   275,   276,   278,   279,   280,   281,
+     287,   289,   293,   313,   314,   315,   319,   321,   323,   324,
+     325,   327,   329,   332,   333,   337,   339,   343,   347,   352,
+     353,   355,   364,   365,   367,   368,   370,   372,   380,   388,
+     390,   391,   393,   394,   395,   396,   399,   400,   405,   406,
+     407,   408,   409,   410,   413,   414,   415,   417,   439,   440,
+     442,   443,   444,   445,   446,   447,   452,   459,   469,   476,
+     488,   490,   493,   494,   495,   496,   497,   527,   528,   530,
+     531,   532,   533,   534,   537,   538,   539,   540,   547,   568,
+     569,   570,   572,   576,   578,   579,   580
 };
 #endif
 
@@ -1375,86 +1376,108 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* MAIN_START: OPEN_WALLET  */
-#line 88 "lang.y"
-                         {globalAreaOn = false; }
-#line 1381 "lang.tab.c"
+#line 89 "lang.y"
+                         {symTables.push_back(new SymTable); globalAreaOn = false; }
+#line 1382 "lang.tab.c"
+    break;
+
+  case 3: /* MAIN_END: CLOSE_WALLET  */
+#line 90 "lang.y"
+                        {
+    SymTable * symTable = symTables.back();
+    std::map<std::string, bool> symExist = symTable->getSymExist();
+    int count = 0;
+    for(auto [name, value] : symExist) {
+        if(value == true && getClassIdSymTable(name) != NULL)
+            count++;
+    }       
+    for(unsigned int j = 0;j < count; j++) 
+    {
+        ClassSymTable * classSymTable = classSymTables.back();
+        delete classSymTable;
+        classSymTables.pop_back();
+    }
+    delete symTable;
+    symTables.pop_back();
+}
+#line 1404 "lang.tab.c"
     break;
 
   case 4: /* S: DECLARATIONS MAIN_START MAIN MAIN_END  */
-#line 91 "lang.y"
+#line 108 "lang.y"
                                           {
         printf("Program compiled succesfully!\n");
         return 0;
 }
-#line 1390 "lang.tab.c"
+#line 1413 "lang.tab.c"
     break;
 
   case 5: /* DECL_START: TYPE  */
-#line 102 "lang.y"
-                  {declOn = true; strcpy((yyval.strValue), (yyvsp[0].strValue)); }
-#line 1396 "lang.tab.c"
+#line 119 "lang.y"
+                  {declOn = true; lastType = std::string((yyvsp[0].strValue)); strcpy((yyval.strValue), (yyvsp[0].strValue)); }
+#line 1419 "lang.tab.c"
     break;
 
   case 6: /* FUNC_START: TRANSACTION ID TYPE_ASSIGN DECL_START '('  */
-#line 104 "lang.y"
-                                                      { funcOn = true; funcSymTables.push_back(new SymTable(std::string((yyvsp[-1].strValue)), std::string((yyvsp[-3].strValue)))); declOn = false;}
-#line 1402 "lang.tab.c"
+#line 120 "lang.y"
+                                                       {  funcOn = true; funcSymTables.push_back(new SymTable(std::string((yyvsp[-1].strValue)), std::string((yyvsp[-3].strValue)))); declOn = false;}
+#line 1425 "lang.tab.c"
     break;
 
   case 7: /* FUNCTION_DECLARATION: FUNC_START DECL_PARAMETER_SEQUENCE ')'  */
-#line 106 "lang.y"
+#line 121 "lang.y"
                                                               { funcOn = false; }
-#line 1408 "lang.tab.c"
+#line 1431 "lang.tab.c"
     break;
 
   case 8: /* FUNCTION_DEFINITION: FUNC_START DECL_PARAMETER_SEQUENCE ')' SCOPE  */
-#line 108 "lang.y"
+#line 123 "lang.y"
                                                                    { funcOn = false; }
-#line 1414 "lang.tab.c"
+#line 1437 "lang.tab.c"
     break;
 
   case 9: /* DECL_PARAMETER_SEQUENCE: DECL_START ID ',' DECL_PARAMETER_SEQUENCE  */
-#line 110 "lang.y"
+#line 125 "lang.y"
                                                                     {
                             SymTable * symTable = funcSymTables.back();
                             symTable->addParameter(std::string((yyvsp[-3].strValue)));
                             symTable->addSymbol(std::string((yyvsp[-2].strValue)), std::string((yyvsp[-3].strValue)));
                             declOn = false;
                         }
-#line 1425 "lang.tab.c"
+#line 1448 "lang.tab.c"
     break;
 
   case 10: /* DECL_PARAMETER_SEQUENCE: DECL_START ID  */
-#line 116 "lang.y"
+#line 131 "lang.y"
                                          {
                             SymTable * symTable = funcSymTables.back();
                             symTable->addParameter(std::string((yyvsp[-1].strValue)));
                             symTable->addSymbol(std::string((yyvsp[0].strValue)), std::string((yyvsp[-1].strValue)));
                             declOn = false;
                         }
-#line 1436 "lang.tab.c"
+#line 1459 "lang.tab.c"
     break;
 
   case 12: /* CLASS_BEGIN_ELEMENT: ACCESS_MODIFIER CLASS  */
-#line 129 "lang.y"
+#line 144 "lang.y"
                                             {strcpy((yyval.strValue), (yyvsp[-1].strValue));}
-#line 1442 "lang.tab.c"
+#line 1465 "lang.tab.c"
     break;
 
   case 13: /* CLASS_BEGIN_ELEMENT: CLASS  */
-#line 130 "lang.y"
+#line 145 "lang.y"
                             {strcpy((yyval.strValue), "public");}
-#line 1448 "lang.tab.c"
+#line 1471 "lang.tab.c"
     break;
 
   case 14: /* CLASS_BEGIN: CLASS_BEGIN_ELEMENT ID  */
-#line 132 "lang.y"
+#line 147 "lang.y"
                                      {classSymTables.push_back(new ClassSymTable(std::string((yyvsp[-1].strValue)), std::string((yyvsp[0].strValue))));}
-#line 1454 "lang.tab.c"
+#line 1477 "lang.tab.c"
     break;
 
   case 19: /* CLASS_MEMBER: ACCESS_MODIFIER DECL_START IDSEQUENCE ';'  */
-#line 141 "lang.y"
+#line 156 "lang.y"
                                                          {
                 ClassSymTable * symTable = classSymTables.back();
                 for(auto [name, value] : unSymbols) 
@@ -1464,12 +1487,13 @@ yyreduce:
                     processUpdate(symTable, className, std::string((yyvsp[-2].strValue)), value, '=');
                 }
                 declOn = false;
+                unSymbols.clear();
             }
-#line 1469 "lang.tab.c"
+#line 1493 "lang.tab.c"
     break;
 
   case 20: /* CLASS_MEMBER: ACCESS_MODIFIER FUNCTION_DECLARATION ';'  */
-#line 151 "lang.y"
+#line 167 "lang.y"
                                                         {
                     ClassSymTable * symTable = classSymTables.back();
                     SymTable * funcSymTable = funcSymTables.back();
@@ -1479,54 +1503,55 @@ yyreduce:
                     funcSymTable->setFunctionName(funcName);
                     symTable->addFuncSymTable(funcSymTable);
              }
-#line 1483 "lang.tab.c"
+#line 1507 "lang.tab.c"
     break;
 
   case 21: /* CLASS_MEMBER: DECL_START IDSEQUENCE ';'  */
-#line 160 "lang.y"
+#line 176 "lang.y"
                                          {
                 ClassSymTable * symTable = classSymTables.back();
                 for(auto [name, value] : unSymbols) 
                 {
-                    std::string className = "private " + name;
+                    std::string className = "blockchain " + name;
                     symTable->addSymbol(className, std::string((yyvsp[-2].strValue)));
                     processUpdate(symTable, className, std::string((yyvsp[-2].strValue)), value, '=');
                 }
                 declOn = false;
+                unSymbols.clear();
              }
-#line 1498 "lang.tab.c"
+#line 1523 "lang.tab.c"
     break;
 
   case 22: /* CLASS_MEMBER: FUNCTION_DECLARATION ';'  */
-#line 170 "lang.y"
+#line 187 "lang.y"
                                         {
                     ClassSymTable * symTable = classSymTables.back();
                     SymTable * funcSymTable = funcSymTables.back();
                     funcSymTables.pop_back();
                     std::string funcName = funcSymTable->getSymTableName();
-                    funcName = "private " + funcName;
+                    funcName = "blockchain " + funcName;
                     funcSymTable->setFunctionName(funcName);
                     symTable->addFuncSymTable(funcSymTable);
              }
-#line 1512 "lang.tab.c"
+#line 1537 "lang.tab.c"
     break;
 
   case 23: /* CLASS_MEMBER: FUNCTION_DEFINITION  */
-#line 179 "lang.y"
+#line 196 "lang.y"
                                    {
                     ClassSymTable * symTable = classSymTables.back();
                     SymTable * funcSymTable = funcSymTables.back();
                     funcSymTables.pop_back();
                     std::string funcName = funcSymTable->getSymTableName();
-                    funcName = "private " + funcName;
+                    funcName = "blockchain " + funcName;
                     funcSymTable->setFunctionName(funcName);
                     symTable->addFuncSymTable(funcSymTable);
              }
-#line 1526 "lang.tab.c"
+#line 1551 "lang.tab.c"
     break;
 
   case 24: /* CLASS_MEMBER: ACCESS_MODIFIER FUNCTION_DEFINITION  */
-#line 188 "lang.y"
+#line 205 "lang.y"
                                                    {
                     ClassSymTable * symTable = classSymTables.back();
                     SymTable * funcSymTable = funcSymTables.back();
@@ -1536,29 +1561,29 @@ yyreduce:
                     funcSymTable->setFunctionName(funcName);
                     symTable->addFuncSymTable(funcSymTable);
              }
-#line 1540 "lang.tab.c"
+#line 1565 "lang.tab.c"
     break;
 
   case 25: /* ACCESS_MODIFIER: PRIVATE  */
-#line 198 "lang.y"
+#line 215 "lang.y"
                           {strcpy((yyval.strValue), (yyvsp[0].strValue));}
-#line 1546 "lang.tab.c"
+#line 1571 "lang.tab.c"
     break;
 
   case 26: /* ACCESS_MODIFIER: PUBLIC  */
-#line 199 "lang.y"
+#line 216 "lang.y"
                          {strcpy((yyval.strValue), (yyvsp[0].strValue));}
-#line 1552 "lang.tab.c"
+#line 1577 "lang.tab.c"
     break;
 
   case 27: /* ACCESS_MODIFIER: PROTECTED  */
-#line 200 "lang.y"
+#line 217 "lang.y"
                             {strcpy((yyval.strValue), (yyvsp[0].strValue));}
-#line 1558 "lang.tab.c"
+#line 1583 "lang.tab.c"
     break;
 
   case 28: /* LINE_DECLARATION: DECL_START IDSEQUENCE  */
-#line 210 "lang.y"
+#line 227 "lang.y"
                                          {
             SymTable * symTable = symTables.back();
             bool ok = 0;
@@ -1584,74 +1609,92 @@ yyreduce:
             unSymbols.clear();
             declOn = false;
         }
-#line 1588 "lang.tab.c"
+#line 1613 "lang.tab.c"
     break;
 
   case 29: /* LINE_DECLARATION: ID ID  */
-#line 235 "lang.y"
-                {
-            SymTable * symTable = symTables.back();
-            symTable->addSymbol(std::string((yyvsp[0].strValue)), std::string((yyvsp[-1].strValue)));
+#line 252 "lang.y"
+                       {
+            ClassSymTable * classSymTable = getClassSymTable(std::string((yyvsp[-1].strValue)));
+            if(classSymTable == NULL)
+                yyerror(ERR(yylineno) + "Undefined identifier " + std::string((yyvsp[-1].strValue)) + "for class type\n");
+            else 
+            {
+                SymTable * symTable = symTables.back();
+                symTable->addSymbol(std::string((yyvsp[0].strValue)), std::string((yyvsp[-1].strValue)));
+                classSymTables.push_back(new ClassSymTable(classSymTable, std::string((yyvsp[-1].strValue)), std::string((yyvsp[0].strValue))));
+            }
         }
-#line 1597 "lang.tab.c"
+#line 1629 "lang.tab.c"
     break;
 
   case 32: /* ID_SEQUENCE_ELEMENT: ID  */
-#line 245 "lang.y"
-                         {
-    printf("se adauga la %s valoarea 0",(yyvsp[0].strValue));unSymbols.push_back({(yyvsp[0].strValue), 0});}
-#line 1604 "lang.tab.c"
+#line 269 "lang.y"
+                         {unSymbols.push_back({(yyvsp[0].strValue), SymTable::getDefaultValue(lastType)});}
+#line 1635 "lang.tab.c"
     break;
 
   case 41: /* BEGIN_SCOPE: SCOPE_START  */
-#line 266 "lang.y"
+#line 289 "lang.y"
                           {
     symTables.push_back(new SymTable);
 }
-#line 1612 "lang.tab.c"
+#line 1643 "lang.tab.c"
     break;
 
   case 42: /* END_SCOPE: SCOPE_END  */
-#line 270 "lang.y"
+#line 293 "lang.y"
                       {
     SymTable * symTable = symTables.back();
+    std::map<std::string, bool> symExist = symTable->getSymExist();
+    int count = 0;
+    for(auto [name, value] : symExist) {
+        if(value == true && getClassIdSymTable(name) != NULL)
+            count++;
+    }       
+    for(unsigned int j = 0;j < count; j++) 
+    {
+        ClassSymTable * classSymTable = classSymTables.back();
+        delete classSymTable;
+        classSymTables.pop_back();
+    }
     delete symTable;
     symTables.pop_back();
 }
-#line 1622 "lang.tab.c"
+#line 1665 "lang.tab.c"
     break;
 
   case 46: /* FOR_BLOCK: FOR_STATEMENT SCOPE  */
-#line 284 "lang.y"
+#line 319 "lang.y"
                                 { symTables.pop_back(); }
-#line 1628 "lang.tab.c"
+#line 1671 "lang.tab.c"
     break;
 
   case 47: /* FOR_START: FOR  */
-#line 286 "lang.y"
+#line 321 "lang.y"
                 { symTables.push_back(new SymTable); }
-#line 1634 "lang.tab.c"
+#line 1677 "lang.tab.c"
     break;
 
   case 57: /* IF_BLOCK: IF_COMPOSITION  */
-#line 308 "lang.y"
+#line 343 "lang.y"
                           {
     ifController = {false, 0};
 }
-#line 1642 "lang.tab.c"
+#line 1685 "lang.tab.c"
     break;
 
   case 58: /* IF_COMPOSITION: IF_STRUCTURE  */
-#line 312 "lang.y"
+#line 347 "lang.y"
                               {
                       if(ifController.first)
                         ifController.second = -1;
                 }
-#line 1651 "lang.tab.c"
+#line 1694 "lang.tab.c"
     break;
 
   case 61: /* IF_STATEMENT: IF BOOLEAN_EXPRESSION  */
-#line 321 "lang.y"
+#line 356 "lang.y"
 {
     ifController = {true, 0};
     if((yyvsp[0].tree)->hasConflictingTypes()) 
@@ -1659,11 +1702,11 @@ yyreduce:
     else if((yyvsp[0].tree)->getExpressionType()!="bool" && (yyvsp[0].tree)->getExpressionResult()!="0" || (yyvsp[0].tree)->getExpressionType()=="bool" && (yyvsp[0].tree)->getExpressionResult()=="true") 
         ifController.second = 1;
 }
-#line 1663 "lang.tab.c"
+#line 1706 "lang.tab.c"
     break;
 
   case 67: /* ELSE_IF_STATEMENT: ELSE_IF BOOLEAN_EXPRESSION  */
-#line 337 "lang.y"
+#line 372 "lang.y"
                                                  {
     if(ifController.second) ifController.second = -1;
     if((yyvsp[0].tree)->hasConflictingTypes()) 
@@ -1671,20 +1714,20 @@ yyreduce:
     else if(((yyvsp[0].tree)->getExpressionType()!="bool" && (yyvsp[0].tree)->getExpressionResult()!="0" || (yyvsp[0].tree)->getExpressionType()=="bool" && (yyvsp[0].tree)->getExpressionResult()=="true") && ifController.second == 0)
         ifController.second = 1;
 }
-#line 1675 "lang.tab.c"
+#line 1718 "lang.tab.c"
     break;
 
   case 68: /* ELSE_STATEMENT: ELSE  */
-#line 345 "lang.y"
+#line 380 "lang.y"
                       {
     if(!ifController.second)
          ifController.second = 1;
 }
-#line 1684 "lang.tab.c"
+#line 1727 "lang.tab.c"
     break;
 
   case 87: /* CLASS_LITERAL: LVALUE_ELEMENT ACCESS ID  */
-#line 382 "lang.y"
+#line 417 "lang.y"
                                          {
     if(isClassMember((yyvsp[-2].strValue))) 
     {
@@ -1695,74 +1738,91 @@ yyreduce:
         {
             if(!classSymTable->isSymbolInClass(std::string((yyvsp[0].strValue)))) 
                 yyerror(ERR(yylineno) + std::string("Identifier " + std::string((yyvsp[0].strValue)) + " doesn't exist in class " + std::string((yyvsp[-2].strValue))));
-            else if(classSymTable->getSymbolPrivacy(std::string((yyvsp[0].strValue))) != "public")
+            else if(classSymTable->getSymbolPrivacy(std::string((yyvsp[0].strValue))) != "in_circulation")
                 yyerror(ERR(yylineno) + "Identifier " + std::string((yyvsp[0].strValue)) + " is " + classSymTable->getSymbolPrivacy(std::string((yyvsp[0].strValue))) + " in the context of class " + std::string((yyvsp[-2].strValue)));
         }
     }
-    strcpy((yyval.strValue), (yyvsp[0].strValue));
+    char className[101];
+    memset(className, false, sizeof(className));
+    strcpy(className, (yyvsp[-2].strValue));
+    className[strlen(className)] = ' ';
+    strcat(className, (yyvsp[0].strValue));
+    strcpy((yyval.strValue), className);
 }
-#line 1705 "lang.tab.c"
+#line 1753 "lang.tab.c"
     break;
 
   case 90: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT '=' EXPRESSION  */
-#line 402 "lang.y"
+#line 442 "lang.y"
                                                      { processAssignmentStatement((yyvsp[0].tree), std::string((yyvsp[-2].strValue)), '='); }
-#line 1711 "lang.tab.c"
+#line 1759 "lang.tab.c"
     break;
 
   case 91: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT '=' ARRAY_DECLARATION  */
-#line 403 "lang.y"
+#line 443 "lang.y"
                                                             {if(declOn) unSymbols.push_back({std::string((yyvsp[-2].strValue)), 0});}
-#line 1717 "lang.tab.c"
+#line 1765 "lang.tab.c"
     break;
 
   case 92: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT ADD_OPERATOR '=' EXPRESSION  */
-#line 404 "lang.y"
+#line 444 "lang.y"
                                                                   { processAssignmentStatement((yyvsp[0].tree), std::string((yyvsp[-3].strValue)), std::string((yyvsp[-2].strValue))[0]);}
-#line 1723 "lang.tab.c"
+#line 1771 "lang.tab.c"
     break;
 
   case 93: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT MUL_OPERATOR '=' EXPRESSION  */
-#line 405 "lang.y"
+#line 445 "lang.y"
                                                                   { processAssignmentStatement((yyvsp[0].tree), std::string((yyvsp[-3].strValue)), std::string((yyvsp[-2].strValue))[0]);}
-#line 1729 "lang.tab.c"
+#line 1777 "lang.tab.c"
+    break;
+
+  case 94: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT INCR  */
+#line 446 "lang.y"
+                                           {processAssignmentStatement(new arb("1","int"), std::string((yyvsp[-1].strValue)), '+');}
+#line 1783 "lang.tab.c"
+    break;
+
+  case 95: /* ASSIGNMENT_STATEMENT: LVALUE_ELEMENT DECR  */
+#line 447 "lang.y"
+                                           {processAssignmentStatement(new arb("1","int"), std::string((yyvsp[-1].strValue)), '-');}
+#line 1789 "lang.tab.c"
     break;
 
   case 96: /* PRINT_STATEMENT: PRINT '(' EXPRESSION ')'  */
-#line 413 "lang.y"
+#line 453 "lang.y"
                   {
                     if((yyvsp[-1].tree)->hasConflictingTypes()) 
                         yyerror(ERR(yylineno) + "Invalid Expression in print statement!\n");
                     else if(validateStatement()) 
                         std::cout << (yyvsp[-1].tree)->getExpressionResult() << '\n';
                   }
-#line 1740 "lang.tab.c"
+#line 1800 "lang.tab.c"
     break;
 
   case 97: /* PRINT_STATEMENT: PRINT '(' BOOLEAN_EXPRESSION ')'  */
-#line 420 "lang.y"
+#line 460 "lang.y"
                   {
                      if((yyvsp[-1].tree)->hasConflictingTypes()) 
                         yyerror(ERR(yylineno) + "Invalid Expression in print statement!\n");
                     else if(validateStatement()) 
                         std::cout << (yyvsp[-1].tree)->getExpressionResult() << '\n';
                   }
-#line 1751 "lang.tab.c"
+#line 1811 "lang.tab.c"
     break;
 
   case 98: /* TYPE_OF_STATEMENT: TYPEOF '(' EXPRESSION ')'  */
-#line 430 "lang.y"
+#line 470 "lang.y"
                     {
                         if((yyvsp[-1].tree)->hasConflictingTypes()) 
                             yyerror(ERR(yylineno) + "Invalid Expression in typeof statement!\n");
                         else if(validateStatement()) 
                             std::cout << (yyvsp[-1].tree)->getExpressionType() << '\n';
                     }
-#line 1762 "lang.tab.c"
+#line 1822 "lang.tab.c"
     break;
 
   case 99: /* TYPE_OF_STATEMENT: TYPEOF '(' BOOLEAN_EXPRESSION ')'  */
-#line 437 "lang.y"
+#line 477 "lang.y"
                     {
                         if((yyvsp[-1].tree)->hasConflictingTypes()) 
                             yyerror(ERR(yylineno) + "Invalid Expression in typeof statement!\n");
@@ -1770,134 +1830,150 @@ yyreduce:
                             std::cout << (yyvsp[-1].tree)->getExpressionType() << '\n';
                         }
                     }
-#line 1774 "lang.tab.c"
+#line 1834 "lang.tab.c"
     break;
 
   case 100: /* EXPRESSION_LITERAL: INTEGER  */
-#line 448 "lang.y"
+#line 488 "lang.y"
                               {(yyval.tree) = new arb(fromValueToString((yyvsp[0].iValue)),"int");}
-#line 1780 "lang.tab.c"
+#line 1840 "lang.tab.c"
     break;
 
   case 101: /* EXPRESSION_LITERAL: COMPLEX_LITERAL  */
-#line 450 "lang.y"
+#line 490 "lang.y"
                                      {
-                    if((yyvsp[0].complValue)->imag>0)
-                    (yyval.tree)=new arb(to_string((yyvsp[0].complValue)->real) + "+" + to_string((yyvsp[0].complValue)->imag) + "i","compl");
-                    else  (yyval.tree)=new arb(to_string((yyvsp[0].complValue)->real) + to_string((yyvsp[0].complValue)->imag) + "i","compl"); 
+                    (yyval.tree)=new arb(fromValueToString(Complex((yyvsp[0].complValue)->real,(yyvsp[0].complValue)->imag)),"compl");
                     }
-#line 1790 "lang.tab.c"
+#line 1848 "lang.tab.c"
     break;
 
   case 102: /* EXPRESSION_LITERAL: STRING_LITERAL  */
-#line 455 "lang.y"
+#line 493 "lang.y"
                                      {(yyval.tree) = new arb(fromValueToString(std::string((yyvsp[0].strValue))),"string");}
-#line 1796 "lang.tab.c"
+#line 1854 "lang.tab.c"
     break;
 
   case 103: /* EXPRESSION_LITERAL: BOOLEAN_LITERAL  */
-#line 456 "lang.y"
+#line 494 "lang.y"
                                       {(yyval.tree) = new arb(fromValueToString((yyvsp[0].bValue)),"bool");}
-#line 1802 "lang.tab.c"
+#line 1860 "lang.tab.c"
     break;
 
   case 104: /* EXPRESSION_LITERAL: FLOAT_LITERAL  */
-#line 457 "lang.y"
+#line 495 "lang.y"
                                     {(yyval.tree) = new arb(fromValueToString((yyvsp[0].fValue)),"float");}
-#line 1808 "lang.tab.c"
+#line 1866 "lang.tab.c"
     break;
 
   case 105: /* EXPRESSION_LITERAL: CHAR_LITERAL  */
-#line 458 "lang.y"
+#line 496 "lang.y"
                                    {(yyval.tree) = new arb(fromValueToString((yyvsp[0].cValue)),"char");}
-#line 1814 "lang.tab.c"
+#line 1872 "lang.tab.c"
     break;
 
   case 106: /* EXPRESSION_LITERAL: LVALUE_ELEMENT  */
-#line 459 "lang.y"
+#line 497 "lang.y"
                                      {
-                        SymTable * symTable = findSymTable(std::string((yyvsp[0].strValue)));
-                        if(symTable != NULL && symTable->isSymbolValid(std::string((yyvsp[0].strValue)))) 
-                        {
-                            value val = symTable->getSymbolValue(std::string((yyvsp[0].strValue)));
+                        std::stringstream ss;
+                        std::string word;
+                        int count = 0;
+                        ss << std::string((yyvsp[0].strValue));
+                        while(ss >> word)
+                            count++;
+                        if(count == 2) {
+                            ss.clear();
+                            ss << std::string((yyvsp[0].strValue));
+                            std::string className, attribute;
+                            ss >> className >> attribute;
+                            SymTable * classSymTable = getClassIdSymTable(className); 
+                            value val = classSymTable->getSymbolValue("in_circulation "+attribute);
+                            if(extractTypeFromVariant(val)!="compl")
                             (yyval.tree) = new arb(fromValueToString(val), extractTypeFromVariant(val));
                         }
-                        else {
-                            yyerror(ERR(yylineno) + std::string("Undeclared variable ") + std::string((yyvsp[0].strValue)));
-                            (yyval.tree) = new arb("0", "int");
+                       else {
+                            SymTable * symTable = findSymTable(std::string((yyvsp[0].strValue)));
+                            if(symTable != NULL) 
+                            {
+                            value val = symTable->getSymbolValue(std::string((yyvsp[0].strValue)));
+                            (yyval.tree) = new arb(fromValueToString(val), extractTypeFromVariant(val));
+                            }
+                            else {                           
+                                yyerror(ERR(yylineno) + std::string("Undeclared variable ") + std::string((yyvsp[0].strValue)));
+                                (yyval.tree) = new arb("0", "int");
+                            }
                         }
                     }
-#line 1831 "lang.tab.c"
+#line 1907 "lang.tab.c"
     break;
 
   case 107: /* EXPRESSION_LITERAL: FUNCTION_CALL  */
-#line 471 "lang.y"
+#line 527 "lang.y"
                                     {(yyval.tree) = (yyvsp[0].tree);}
-#line 1837 "lang.tab.c"
+#line 1913 "lang.tab.c"
     break;
 
   case 108: /* EXPRESSION_LITERAL: LVALUE_ELEMENT ACCESS FUNCTION_CALL  */
-#line 472 "lang.y"
+#line 528 "lang.y"
                                                           {(yyval.tree) = (yyvsp[0].tree);}
-#line 1843 "lang.tab.c"
+#line 1919 "lang.tab.c"
     break;
 
   case 109: /* EXPRESSION: EXPRESSION_LITERAL  */
-#line 474 "lang.y"
+#line 530 "lang.y"
                                 {(yyval.tree) = (yyvsp[0].tree);}
-#line 1849 "lang.tab.c"
+#line 1925 "lang.tab.c"
     break;
 
   case 110: /* EXPRESSION: '(' EXPRESSION ')'  */
-#line 475 "lang.y"
+#line 531 "lang.y"
                                 {(yyval.tree)=(yyvsp[-1].tree);}
-#line 1855 "lang.tab.c"
+#line 1931 "lang.tab.c"
     break;
 
   case 111: /* EXPRESSION: ADD_OPERATOR EXPRESSION  */
-#line 476 "lang.y"
+#line 532 "lang.y"
                                      {(yyval.tree)= new arb((yyvsp[-1].strValue),"",(yyvsp[0].tree),nullptr);}
-#line 1861 "lang.tab.c"
+#line 1937 "lang.tab.c"
     break;
 
   case 112: /* EXPRESSION: EXPRESSION ADD_OPERATOR EXPRESSION  */
-#line 477 "lang.y"
+#line 533 "lang.y"
                                                 {(yyval.tree) = new arb((yyvsp[-1].strValue),"",(yyvsp[-2].tree),(yyvsp[0].tree));}
-#line 1867 "lang.tab.c"
+#line 1943 "lang.tab.c"
     break;
 
   case 113: /* EXPRESSION: EXPRESSION MUL_OPERATOR EXPRESSION  */
-#line 478 "lang.y"
+#line 534 "lang.y"
                                                 {(yyval.tree) = new arb((yyvsp[-1].strValue),"",(yyvsp[-2].tree),(yyvsp[0].tree));}
-#line 1873 "lang.tab.c"
+#line 1949 "lang.tab.c"
     break;
 
   case 114: /* BOOLEAN_EXPRESSION: BOOLEAN_EXPRESSION AND BOOLEAN_EXPRESSION  */
-#line 481 "lang.y"
+#line 537 "lang.y"
                                                                 {(yyval.tree) = new arb("&&","",(yyvsp[-2].tree),(yyvsp[0].tree));}
-#line 1879 "lang.tab.c"
+#line 1955 "lang.tab.c"
     break;
 
   case 115: /* BOOLEAN_EXPRESSION: BOOLEAN_EXPRESSION OR BOOLEAN_EXPRESSION  */
-#line 482 "lang.y"
+#line 538 "lang.y"
                                                                {(yyval.tree) = new arb("||","",(yyvsp[-2].tree),(yyvsp[0].tree));}
-#line 1885 "lang.tab.c"
+#line 1961 "lang.tab.c"
     break;
 
   case 116: /* BOOLEAN_EXPRESSION: '(' BOOLEAN_EXPRESSION ')'  */
-#line 483 "lang.y"
+#line 539 "lang.y"
                                                  {(yyval.tree) = (yyvsp[-1].tree);}
-#line 1891 "lang.tab.c"
+#line 1967 "lang.tab.c"
     break;
 
   case 117: /* BOOLEAN_EXPRESSION: EXPRESSION BOOL_OPERATOR EXPRESSION  */
-#line 484 "lang.y"
+#line 540 "lang.y"
                                                           {(yyval.tree) = new arb((yyvsp[-1].strValue),"",(yyvsp[-2].tree),(yyvsp[0].tree));}
-#line 1897 "lang.tab.c"
+#line 1973 "lang.tab.c"
     break;
 
   case 118: /* FUNCTION_CALL: ID '(' PARAMETER_LIST ')'  */
-#line 492 "lang.y"
+#line 548 "lang.y"
 {
     if(validateStatement()) 
     {
@@ -1915,29 +1991,35 @@ yyreduce:
 
     parameters.clear();
 }
-#line 1919 "lang.tab.c"
+#line 1995 "lang.tab.c"
     break;
 
   case 119: /* PARAMETER_LIST: PARAMETER  */
-#line 512 "lang.y"
-                           {parameters.push_back("int");}
-#line 1925 "lang.tab.c"
+#line 568 "lang.y"
+                           {parameters.push_back((yyvsp[0].tree)->getExpressionType());}
+#line 2001 "lang.tab.c"
     break;
 
   case 120: /* PARAMETER_LIST: PARAMETER ',' PARAMETER_LIST  */
-#line 513 "lang.y"
-                                              {parameters.push_back("int");}
-#line 1931 "lang.tab.c"
+#line 569 "lang.y"
+                                              {parameters.push_back((yyvsp[-2].tree)->getExpressionType());}
+#line 2007 "lang.tab.c"
+    break;
+
+  case 122: /* PARAMETER: EXPRESSION  */
+#line 572 "lang.y"
+                       {(yyval.tree) = (yyvsp[0].tree);}
+#line 2013 "lang.tab.c"
     break;
 
   case 123: /* ARRAY_LITERAL: ID '[' EXPRESSION ']'  */
-#line 520 "lang.y"
+#line 576 "lang.y"
                                       { strcpy((yyval.strValue), (yyvsp[-3].strValue));}
-#line 1937 "lang.tab.c"
+#line 2019 "lang.tab.c"
     break;
 
 
-#line 1941 "lang.tab.c"
+#line 2023 "lang.tab.c"
 
       default: break;
     }
@@ -2130,13 +2212,13 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 528 "lang.y"
+#line 584 "lang.y"
 
 
 void yyerror(std::string s)
 {
     std::ofstream g("errors.txt", ios_base::app);
-    g << s;
+    g << s << '\n';
     g.close();
 }
 
@@ -2209,16 +2291,16 @@ bool validateStatement()
 
 SymTable * findSymTable(std::string s)
 {
-    for(int j = symTables.size() - 1;j >= 0; --j)
+       for(int j = symTables.size() - 1;j >= 0; --j)
     {
         SymTable * symTable = symTables[j];
         if(symTable->isSymbolValid(s))
             return symTable;
     }
 
-    for(int j = classSymTables.size() - 1; j >= 0; --j)
+       for(int j = classSymTables.size() - 1; j >= 0; --j)
     {
-        SymTable * symTable = classSymTables[j];
+        ClassSymTable * symTable = classSymTables[j];
         if(symTable->isSymbolValid(s))
             return symTable;
     }
@@ -2269,6 +2351,16 @@ ClassSymTable * getClassSymTable(std::string name)
     }
     return NULL;
 }
+ClassSymTable * getClassIdSymTable(std::string s)
+{
+    for(int j = classSymTables.size() - 1; j >= 0; --j)
+    {
+        ClassSymTable * symTable = classSymTables[j];
+        if(symTable->getSymTableName() == s)
+            return symTable;
+    }
+    return NULL;
+}
 
 bool validateFunction(std::string name, std::vector<std::string> parameters)
 {
@@ -2292,7 +2384,7 @@ bool validateFunction(std::string name, std::vector<std::string> parameters)
             ss << funcName; ss >> prv >> funcName;
             if(funcName == name && symTable->isParameterMatch(parameters)) 
             {
-                if(prv == "public") 
+                if(prv == "in_circulation") 
                     return symTable;
                 inClass = true;
             }
@@ -2350,23 +2442,21 @@ void processUpdate(SymTable * symTable, std::string name, std::string type, valu
 {
     if(op == '=' && !symTable->updateSymbol(name, val) || op != '=' && !symTable->updateSymbol(name, val, op)) 
     {
-        printf("Aici la processupdate baga eroarea\n");
-        symTable->printVariables();
         yyerror(ERR(yylineno) + "Variable " + name + " is of type " + symTable->getSymbolType(name) + " not of type " + extractTypeFromVariant(val));
-        exit(2);
     }
 }
 
 void processAssignmentStatement(arb * arb, std::string name, char op)
 {
+    printf("SUNT IN ASSIGMENT STATEMENT YEEEEEEEEEEEEEEEE\n");
     if(arb->hasConflictingTypes())  
     {
         yyerror(ERR(yylineno) + "Invalid Expression in Assignment Statement!\n");
-        exit(7);
+        return;
     }
     std::string type = arb->getExpressionType();
     value val = arb->getExpressionResult();
-
+    printf("type : %s , value : %s \n",arb->getExpressionType().c_str(),arb->getExpressionResult().c_str());
     std::string value = std::get<std::string>(val);
     if(type == "int")
         val = std::stoi(value);
@@ -2379,16 +2469,58 @@ void processAssignmentStatement(arb * arb, std::string name, char op)
         val = value[0];
     else if(type == "float")
         val = std::stof(value);
+    else if(type=="compl"){
+    std::string token=value;
+     int imag,real;
+    size_t iPos = token.find('i'); // poztia lui i
+    if (iPos==string ::npos)
+    {
+        imag = 0;
+        real = stof(token);
+        val=Complex(real, imag);
+    }
+    size_t plusPos = token.find_last_of('+', iPos); // pozitia lu + si -
+    size_t minusPos = token.find_last_of('-', iPos);
+    size_t splitPos = (plusPos != string::npos) ? plusPos : (minusPos !=string::npos) ? minusPos :string::npos; // vedem care e diferita de npos(care e )
+    
+    if (splitPos == string::npos)
+    {
+        real = 0;
+        imag = stof(token.substr(0, iPos));
+        val=Complex(real, imag);
+
+    }
+    imag = stof(token.substr(splitPos + 1, iPos - splitPos - 1));
+    real = stof(token.substr(0, splitPos));
+    if(token[splitPos]=='-' && imag>0)
+    imag=-imag;
+    val=Complex(real, imag);
+}
     if(validateStatement()) 
-    {    
-        SymTable * symTable = findSymTable(name);
-        if(isSymbolValid(name, type)) 
-        {        
-            if(op == '=')
-                processUpdate(symTable, name, type, val, op);
-            else 
-                processUpdate(symTable, name, type, val, op);
+       {   
+        SymTable * symTable;
+        std::stringstream ss;
+        std::string word;
+        int count = 0;
+        ss << name;
+        while(ss >> word)
+            count++;
+        if(count == 2) 
+        {
+            ss.clear();
+            ss << name;
+            std::string className, attribute;
+            ss >> className >> attribute;
+            name = attribute;
+            ClassSymTable * classSymTable = getClassIdSymTable(className);
+            if(!classSymTable->isSymbolValid(name) || classSymTable->getSymbolPrivacy(name) != "in_circulation")
+                return;
+            name = "in_circulation " + name;
+            symTable = classSymTable;
         }
+        else symTable = findSymTable(name);
+        if(isSymbolValid(name, type))    
+            processUpdate(symTable, name, type, val, op);
         else 
         {                
             if(op != '=') 
@@ -2422,6 +2554,8 @@ std::string fromValueToString(value val)
         ss << get<bool>(val);
     else if(std::holds_alternative<char>(val))
         ss << get<char>(val);
+    else if(std::holds_alternative<Complex>(val))
+        ss << get<Complex>(val);
     ss >> s;
     return s;
 }

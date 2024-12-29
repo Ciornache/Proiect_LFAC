@@ -6,27 +6,43 @@
 #include <string>
 #include "symtable.h"
 using namespace std;
+std::string fromComplexToString(Complex c)
+{
+    std::stringstream ss;
+    std::string s;
+    ss << c;
+    ss >> s;
+    return s;
+}
 Complex parseComplex(const string &token)
 {
+    cout<<token<<'\n';
+    int imag,real;
     size_t iPos = token.find('i'); // poztia lui i
-
+    printf("ipos e %ld \n",iPos);
+    if (iPos==string ::npos)
+    {
+        imag = 0.0;
+        real = stof(token);
+        cout<<"primu if :"<<real<<" "<<imag<<'\n';
+        return Complex(real, imag);
+    }
     size_t plusPos = token.find_last_of('+', iPos); // pozitia lu + si -
     size_t minusPos = token.find_last_of('-', iPos);
-
-    size_t splitPos = (plusPos != string::npos) ? plusPos : minusPos; // vedem care e diferita de npos(care e )
-
+    size_t splitPos = (plusPos != string::npos) ? plusPos : (minusPos !=string::npos) ? minusPos :string::npos; // vedem care e diferita de npos(care e )
+    printf("splitPos e %ld \n",splitPos);
     if (splitPos == string::npos)
     {
-        throw runtime_error("Invalid complex number format: " + token); // in teorie nu ar trebuie sa se poata da na just in case
+        real = 0.0;
+        imag = stof(token.substr(0, iPos));
+        cout<<"al 2-lea if: "<<real<<" "<<imag<<'\n';
+        return Complex(real, imag);
     }
-    int real = stoi(token.substr(0, splitPos));
-    int imag = stoi(token.substr(splitPos + 1, iPos - splitPos - 1));
-
-    if (token[splitPos] == '-')
-    {
-        imag = -imag;
-    }
-
+    imag = stof(token.substr(splitPos + 1, iPos - splitPos - 1));
+    real = stof(token.substr(0, splitPos));
+    if(token[splitPos]=='-' && imag>0)
+    imag=-imag;
+    cout<<real<<" "<<imag<<'\n';
     return Complex(real, imag);
 }
 
@@ -96,7 +112,8 @@ bool arb::hasConflictingTypes()
 
         if (leftType == "string" && rightType == "string" && token != "+" && token != "==" && token != "!=" && token != ">=" && token != "<=" && token != ">" && token != "<")
             return true;
-
+        if (leftType == "compl" && !(token != ">=" && token != "<=" && token != ">" && token != "<" && token!="%"))
+            return true;
         if (leftType == "float" && rightType == "float" && token == "%")
             return true;
 
@@ -190,10 +207,7 @@ String arb::getExpressionResult()
             {
                 Complex complexOperand = parseComplex(operandResult);
                 Complex negated = Complex(-complexOperand.real, -complexOperand.imag);
-                if (negated.imag > 0)
-                    return to_string(negated.real) + "+" + to_string(negated.imag) + "i";
-                else
-                    return to_string(negated.real) + to_string(negated.imag) + "i";
+                return fromComplexToString(negated);
             }
         }
     }
@@ -214,10 +228,7 @@ String arb::getExpressionResult()
                 Complex t1 = parseComplex(leftResult);
                 Complex t2 = parseComplex(rightResult);
                 Complex result = t1 + t2;
-                if (result.imag > 0)
-                    return to_string(result.real) + "+" + to_string(result.imag) + "i";
-                else
-                    return to_string(result.real) + to_string(result.imag) + "i";
+                return fromComplexToString(result);
             }
             else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) + stoi(rightResult));
@@ -235,10 +246,7 @@ String arb::getExpressionResult()
                 Complex t1 = parseComplex(leftResult);
                 Complex t2 = parseComplex(rightResult);
                 Complex result = t1 - t2;
-                if (result.imag > 0)
-                    return to_string(result.real) + "+" + to_string(result.imag) + "i";
-                else
-                    return to_string(result.real) + to_string(result.imag) + "i";
+                return fromComplexToString(result);
             }
             else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) - stoi(rightResult));
@@ -254,10 +262,7 @@ String arb::getExpressionResult()
                 Complex t1 = parseComplex(leftResult);
                 Complex t2 = parseComplex(rightResult);
                 Complex result = t1 * t2;
-                if (result.imag > 0)
-                    return to_string(result.real) + "+" + to_string(result.imag) + "i";
-                else
-                    return to_string(result.real) + to_string(result.imag) + "i";
+                return fromComplexToString(result);
             }
             else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) * stoi(rightResult));
@@ -275,10 +280,7 @@ String arb::getExpressionResult()
                 Complex t1 = parseComplex(leftResult);
                 Complex t2 = parseComplex(rightResult);
                 Complex result = t1 / t2;
-                if (result.imag > 0)
-                    return to_string(result.real) + "+" + to_string(result.imag) + "i";
-                else
-                    return to_string(result.real) + to_string(result.imag) + "i";
+                return fromComplexToString(result);
             }
             else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) / stoi(rightResult));
@@ -289,16 +291,6 @@ String arb::getExpressionResult()
         {
             if (stoi(rightResult) == 0)
                 throw runtime_error("Division by zero");
-            else if (left->type == "compl")
-            {
-                Complex t1 = parseComplex(leftResult);
-                Complex t2 = parseComplex(rightResult);
-                Complex result = t1 % t2;
-                if (result.imag > 0)
-                    return to_string(result.real) + "+" + to_string(result.imag) + "i";
-                else
-                    return to_string(result.real) + to_string(result.imag) + "i";
-            }
             else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) % stoi(rightResult));
             else if (left->type == "char")
@@ -415,6 +407,43 @@ String arb::getExpressionResult()
                 if (stof(leftResult) != stof(rightResult))
                     return "true";
                 return "false";
+            }
+            else if(left->type=="compl"){
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                if(t1.real!=t2.real || t1.imag!=t2.imag){
+                    return "true";
+                }
+                else return "false";
+            }
+        }
+        else if (token == "==")
+        {
+            if (left->type == "int" || left->type == "bool")
+            {
+                if (stoi(leftResult) == stoi(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if (left->type == "string" || left->type == "char")
+            {
+                if (leftResult == rightResult)
+                    return "true";
+                return "false";
+            }
+            else if (left->type == "float")
+            {
+                if (stof(leftResult) == stof(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if(left->type=="compl"){
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                if(t1.real!=t2.real || t1.imag!=t2.imag){
+                    return "false";
+                }
+                else return "true";
             }
         }
     }

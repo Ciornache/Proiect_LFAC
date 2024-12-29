@@ -12,13 +12,29 @@ using namespace std;
 
 struct Complex
 {
-    int real;
-    int imag;
-    Complex(int number) : real(number), imag(number) {};
-    Complex(int real, int imag) : real(real), imag(imag) {};
+    float real;
+    float imag;
+
+    Complex(float number) : real(number), imag(number) {};
+    Complex(float real, float imag) : real(real), imag(imag) {};
     friend ostream &operator<<(ostream &os, const Complex &c)
     {
-        os << c.real << ' ' << c.imag;
+        if (c.imag == 0 && c.real == 0)
+            os << '0';
+        else if (c.imag != 0 && c.real == 0)
+        {
+            os << c.imag << 'i';
+        }
+        else
+        {
+            if (c.imag > 0)
+                os << c.real << '+' << c.imag << 'i';
+            else if (c.imag < 0)
+                os << c.real << c.imag << 'i';
+            else
+                os << c.real;
+            
+        }
         return os;
     }
     Complex operator+(const Complex &c)
@@ -35,14 +51,13 @@ struct Complex
     }
     Complex operator/(const Complex &c)
     {
-        return {(this->real * c.real + this->imag * c.imag) / (this->imag * this->imag + c.imag * c.imag), (this->imag * c.real - this->real * c.imag) / (this->imag * this->imag + c.imag * c.imag)};
+        return {(this->real * c.real + this->imag * c.imag) / (c.real * c.real + c.imag * c.imag), (this->imag * c.real - this->real * c.imag) / (c.real * c.real + c.imag * c.imag)};
     }
     Complex operator%(const Complex &c)
     {
-        return {this->real % c.real, this->imag % c.imag};
+        return {0.0,0.0};
     }
 };
-
 struct Symbol
 {
     std::string type;
@@ -72,6 +87,7 @@ public:
     std::string getSymbolType(std::string s);
     SymTable(std::string type, std::string name) : type(type), name(name) {};
     SymTable() {};
+    SymTable(SymTable *symTable);
     std::string getSymTableName();
     std::string getSymTableType();
     bool isSymbolClassMember(std::string name);
@@ -80,6 +96,7 @@ public:
     void printFunctionDescription();
     void setFunctionName(std::string name);
     std::vector<std::string> getParameters();
+    std::map<std::string, bool> getSymExist();
 };
 
 class ClassSymTable : public SymTable
@@ -96,6 +113,7 @@ public:
     virtual bool isSymbolValid(std::string s);
     std::string getSymbolPrivacy(std::string s);
     ClassSymTable(std::string type, std::string name);
+    ClassSymTable(ClassSymTable *classSymTable, std::string type, std::string name);
     ClassSymTable();
     ~ClassSymTable();
 };

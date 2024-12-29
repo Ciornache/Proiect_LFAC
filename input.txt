@@ -1,15 +1,15 @@
 int globalSupply = 5, globalDemand = 10;
 int isBullMarket = 1;
 string market = "GlobalExchange";
-//compl c=2+3i;
-in circulation asset Calculator
+compl c=2+3i;
+in_circulation asset Calculator
 OPEN ORDER
     blockchain int precision = 20, leverage;
-    in circulation transaction add -> int ()
+    in_circulation transaction add -> int ()
     OPEN ORDER
         return precision + leverage;
     STOP LOSS
-    in circulation transaction multiply -> int ()
+    in_circulation transaction multiply -> int ()
     OPEN ORDER
         return precision * leverage;
     STOP LOSS
@@ -19,7 +19,7 @@ OPEN ORDER
         return "0xCryptoHash";
     STOP LOSS
 
-    value locked transaction validateMarket -> bool (bool ok)
+    value_locked transaction validateMarket -> bool (bool ok)
     OPEN ORDER
         return isBullMarket;
     STOP LOSS
@@ -42,9 +42,7 @@ STOP LOSS
 int results = [10; 20], vector2 = [15;100];
 
 OPEN WALLET
-    print(-(2*3+4));
     OPEN ORDER
-
         int localAssets = 20, localLiabilities = 30;
         print(localAssets + localLiabilities);
         string transactionNote = "Trade Confirmed";
@@ -109,4 +107,10 @@ OPEN WALLET
         print(counter);
         counter = counter + 1;
     STOP LOSS
+    print((-2-i)-(-4+2i));
+    print((2-i)/(2+i));
+    print((2-i)*(2+i)/c);
+    print((c-(2+0i))*c);
+    print((c-(2+0i))*c-(0+6i));
+    //print(1.3+4.3i);
 CLOSE WALLET

@@ -26,12 +26,12 @@ commentChr [/]
     yylval.strValue = strdup(yytext);
     return PRIVATE; 
 }
-"in circulation"  { 
+"in_circulation"  { 
     printf("I found token PUBLIC\n");
     yylval.strValue = strdup(yytext);
     return PUBLIC; 
 }
-"value locked" {
+"value_locked" {
     yylval.strValue = strdup(yytext); 
     return PROTECTED; 
 }
@@ -78,7 +78,40 @@ commentChr [/]
  ,yytext); return ID;}
 {digit}+['.']{digit}+ {yylval.fValue = stof(std::string(yytext)); return FLOAT_LITERAL; }
 {digit}+ {yylval.iValue = atoi(yytext); return INTEGER;}
+{digit}+[+-]+i {
+    int realPart, imagPart=1;
+    char sign;
+    sscanf(yytext, "%d%c", &realPart, &sign);
+    if (sign == '-') {
+        imagPart = -imagPart;
+    }
+    yylval.complValue=new Complex(realPart,imagPart);
+    //printf("Found complex number: %d%+di\n", yylval.complValue.real, yylval.complValue.imag);
+    return COMPLEX_LITERAL; 
+}
 {digit}+[+-]{digit}+i {
+    int realPart, imagPart;
+    char sign;
+    sscanf(yytext, "%d%c%d", &realPart, &sign, &imagPart);
+    if (sign == '-') {
+        imagPart = -imagPart;
+    }
+    yylval.complValue=new Complex(realPart,imagPart);
+    //printf("Found complex number: %d%+di\n", yylval.complValue.real, yylval.complValue.imag);
+    return COMPLEX_LITERAL; 
+}
+[-]+{digit}+[+-]+i {
+    int realPart, imagPart=1;
+    char sign;
+    sscanf(yytext, "%d%c", &realPart, &sign);
+    if (sign == '-') {
+        imagPart = -imagPart;
+    }
+    yylval.complValue=new Complex(realPart,imagPart);
+    //printf("Found complex number: %d%+di\n", yylval.complValue.real, yylval.complValue.imag);
+    return COMPLEX_LITERAL; 
+}
+[-]+{digit}+[+-]{digit}+i {
     int realPart, imagPart;
     char sign;
     sscanf(yytext, "%d%c%d", &realPart, &sign, &imagPart);

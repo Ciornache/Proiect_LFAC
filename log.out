@@ -1,13 +1,8 @@
-Variable name: calc, Type: Calculator, Value: Undefined
-Variable name: counter, Type: int, Value: 1
+Variable name: c, Type: compl, Value: Undefined
 Variable name: globalDemand, Type: int, Value: 10
 Variable name: globalSupply, Type: int, Value: 5
 Variable name: isBullMarket, Type: int, Value: 1
-Variable name: leverage, Type: int, Value: 69
 Variable name: market, Type: string, Value: GlobalExchange
-Variable name: n, Type: int, Value: 20
-Variable name: precision, Type: int, Value: 30
-Variable name: result, Type: int, Value: 0
 Variable name: results, Type: int, Value: 0
 Variable name: vector2, Type: int, Value: 0
 
@@ -17,19 +12,17 @@ Parameter List: int
 Class name: Calculator
 ######                   Class Attributes                   ######
 
-Attribute Name: leverage, Type: int, Value: 0
-Attribute Name: precision, Type: int, Value: 20
-Attribute Name: , Type: , Value: 0
-Attribute Name: , Type: , Value: 0
+Attribute Name: leverage, Type: int, Access Type: blockchain, Value: 0
+Attribute Name: precision, Type: int, Access Type: blockchain, Value: 20
 
-Method Name: circulation, Return Type: int, Access Type: in. Method Header contains 0 parameters.
+Method Name: add, Return Type: int, Access Type: in_circulation. Method Header contains 0 parameters.
 
-Method Name: circulation, Return Type: int, Access Type: in. Method Header contains 0 parameters.
+Method Name: multiply, Return Type: int, Access Type: in_circulation. Method Header contains 0 parameters.
 
 Method Name: computeHash, Return Type: string, Access Type: blockchain. Method Header contains 0 parameters.
 Parameter List: int int int 
 
-Method Name: locked, Return Type: bool, Access Type: value. Method Header contains 1 parameter.
+Method Name: validateMarket, Return Type: bool, Access Type: value_locked. Method Header contains 1 parameter.
 Parameter List: bool 
 
-Method Name: fee, Return Type: float, Access Type: private. Method Header contains 0 parameters.
+Method Name: fee, Return Type: float, Access Type: blockchain. Method Header contains 0 parameters.

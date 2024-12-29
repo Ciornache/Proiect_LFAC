@@ -1,3 +1,6 @@
-Error on line 57: Function add was not declared in this scope!
-Error on line 58: Function multiply was not declared in this scope!
-Error on line 82: Function add was not declared in this scope!
+Error on line 53: Identifier precision is blockchain in the context of class calc
+Error on line 54: Identifier leverage is blockchain in the context of class calc
+Error on line 82: Identifier precision is blockchain in the context of class calc
+Error on line 83: Identifier leverage is blockchain in the context of class calc
+Error on line 84: Identifier precision is blockchain in the context of class calc
+Error on line 85: Identifier leverage is blockchain in the context of class calc
