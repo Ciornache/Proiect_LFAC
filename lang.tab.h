@@ -56,37 +56,38 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     ID = 258,                      /* ID  */
     INTEGER = 259,                 /* INTEGER  */
-    TYPE = 260,                    /* TYPE  */
-    BOOLEAN_LITERAL = 261,         /* BOOLEAN_LITERAL  */
-    STRING_LITERAL = 262,          /* STRING_LITERAL  */
-    FLOAT_LITERAL = 263,           /* FLOAT_LITERAL  */
-    CHAR_LITERAL = 264,            /* CHAR_LITERAL  */
-    OPEN_WALLET = 265,             /* OPEN_WALLET  */
-    CLOSE_WALLET = 266,            /* CLOSE_WALLET  */
-    PRINT = 267,                   /* PRINT  */
-    TYPEOF = 268,                  /* TYPEOF  */
-    PRIVATE = 269,                 /* PRIVATE  */
-    PUBLIC = 270,                  /* PUBLIC  */
-    PROTECTED = 271,               /* PROTECTED  */
-    TRANSACTION = 272,             /* TRANSACTION  */
-    TYPE_ASSIGN = 273,             /* TYPE_ASSIGN  */
-    CLASS = 274,                   /* CLASS  */
-    ACCESS = 275,                  /* ACCESS  */
-    AND = 276,                     /* AND  */
-    OR = 277,                      /* OR  */
-    IF = 278,                      /* IF  */
-    ELSE = 279,                    /* ELSE  */
-    ELSE_IF = 280,                 /* ELSE_IF  */
-    WHILE = 281,                   /* WHILE  */
-    FOR = 282,                     /* FOR  */
-    SCOPE_START = 283,             /* SCOPE_START  */
-    SCOPE_END = 284,               /* SCOPE_END  */
-    INCR = 285,                    /* INCR  */
-    DECR = 286,                    /* DECR  */
-    RETURN = 287,                  /* RETURN  */
-    BOOL_OPERATOR = 288,           /* BOOL_OPERATOR  */
-    ADD_OPERATOR = 289,            /* ADD_OPERATOR  */
-    MUL_OPERATOR = 290             /* MUL_OPERATOR  */
+    COMPLEX_LITERAL = 260,         /* COMPLEX_LITERAL  */
+    TYPE = 261,                    /* TYPE  */
+    BOOLEAN_LITERAL = 262,         /* BOOLEAN_LITERAL  */
+    STRING_LITERAL = 263,          /* STRING_LITERAL  */
+    FLOAT_LITERAL = 264,           /* FLOAT_LITERAL  */
+    CHAR_LITERAL = 265,            /* CHAR_LITERAL  */
+    OPEN_WALLET = 266,             /* OPEN_WALLET  */
+    CLOSE_WALLET = 267,            /* CLOSE_WALLET  */
+    PRINT = 268,                   /* PRINT  */
+    TYPEOF = 269,                  /* TYPEOF  */
+    PRIVATE = 270,                 /* PRIVATE  */
+    PUBLIC = 271,                  /* PUBLIC  */
+    PROTECTED = 272,               /* PROTECTED  */
+    TRANSACTION = 273,             /* TRANSACTION  */
+    TYPE_ASSIGN = 274,             /* TYPE_ASSIGN  */
+    CLASS = 275,                   /* CLASS  */
+    ACCESS = 276,                  /* ACCESS  */
+    AND = 277,                     /* AND  */
+    OR = 278,                      /* OR  */
+    IF = 279,                      /* IF  */
+    ELSE = 280,                    /* ELSE  */
+    ELSE_IF = 281,                 /* ELSE_IF  */
+    WHILE = 282,                   /* WHILE  */
+    FOR = 283,                     /* FOR  */
+    SCOPE_START = 284,             /* SCOPE_START  */
+    SCOPE_END = 285,               /* SCOPE_END  */
+    INCR = 286,                    /* INCR  */
+    DECR = 287,                    /* DECR  */
+    RETURN = 288,                  /* RETURN  */
+    BOOL_OPERATOR = 289,           /* BOOL_OPERATOR  */
+    ADD_OPERATOR = 290,            /* ADD_OPERATOR  */
+    MUL_OPERATOR = 291             /* MUL_OPERATOR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -102,10 +103,10 @@ union YYSTYPE
     bool bValue;
     float fValue;
     char cValue;
-    class Compl* c;
+    struct Complex* complValue;
     class arb* tree;
 
-#line 109 "lang.tab.h"
+#line 110 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

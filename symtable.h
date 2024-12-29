@@ -12,30 +12,52 @@ using namespace std;
 
 struct Complex
 {
-    int real;
-    int imag;
-    Complex(int real, int imag) : real(real), imag(imag) {};
-    friend ostream& operator << (ostream & os, const Complex & c)  {
-        os << c.real << ' ' << c.imag;
+    float real;
+    float imag;
+
+    Complex(float number) : real(number), imag(number) {};
+    Complex(float real, float imag) : real(real), imag(imag) {};
+    friend ostream &operator<<(ostream &os, const Complex &c)
+    {
+        if (c.imag == 0 && c.real == 0)
+            os << '0';
+        else if (c.imag != 0 && c.real == 0)
+        {
+            os << c.imag << 'i';
+        }
+        else
+        {
+            if (c.imag > 0)
+                os << c.real << '+' << c.imag << 'i';
+            else if (c.imag < 0)
+                os << c.real << c.imag << 'i';
+            else
+                os << c.real;
+            
+        }
         return os;
     }
-    Complex operator + (const Complex & c) {
+    Complex operator+(const Complex &c)
+    {
         return {this->real + c.real, this->imag + c.imag};
     }
-    Complex operator - (const Complex & c) {
+    Complex operator-(const Complex &c)
+    {
         return {this->real - c.real, this->imag - c.imag};
     }
-    Complex operator * (const Complex & c) {
+    Complex operator*(const Complex &c)
+    {
         return {this->real * c.real - this->imag * c.imag, this->imag * c.real + this->real * c.imag};
     }
-    Complex operator / (const Complex & c) {
-        return {this->real / c.real, this->imag / c.imag};
+    Complex operator/(const Complex &c)
+    {
+        return {(this->real * c.real + this->imag * c.imag) / (c.real * c.real + c.imag * c.imag), (this->imag * c.real - this->real * c.imag) / (c.real * c.real + c.imag * c.imag)};
     }
-    Complex operator % (const Complex & c) {
-        return {this->real % c.real, this->imag % c.imag};
+    Complex operator%(const Complex &c)
+    {
+        return {0.0,0.0};
     }
 };
-
 struct Symbol
 {
     std::string type;

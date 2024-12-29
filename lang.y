@@ -37,7 +37,8 @@
     std::vector<SymTable*> symTables, funcSymTables;
     std::vector<ClassSymTable*> classSymTables;
     std::vector<std::string> parameters;
-
+    ClassSymTable * getClassIdSymTable(std::string s);
+    std::string lastType;
 %}
 %union {
     char * strValue;
@@ -45,12 +46,13 @@
     bool bValue;
     float fValue;
     char cValue;
-    class Compl* c;
+    struct Complex* complValue;
     class arb* tree;
 }
 
 %token<strValue> ID
 %token<iValue> INTEGER
+%token<complValue> COMPLEX_LITERAL
 %token<strValue> TYPE
 %token<bValue> BOOLEAN_LITERAL 
 %token<strValue> STRING_LITERAL
@@ -67,6 +69,7 @@
 %token INCR DECR
 %token RETURN 
 %token<strValue> BOOL_OPERATOR ADD_OPERATOR MUL_OPERATOR
+%type<tree> FUNCTION_CALL BOOLEAN_EXPRESSION EXPRESSION_LITERAL EXPRESSION PARAMETER
 %type<tree> FUNCTION_CALL BOOLEAN_EXPRESSION EXPRESSION_LITERAL EXPRESSION PARAMETER
 %type<strValue> ARRAY_LITERAL LVALUE_ELEMENT DECL_START
 %type<strValue> PRIVATE PUBLIC PROTECTED ACCESS_MODIFIER CLASS_BEGIN_ELEMENT CLASS_LITERAL
@@ -85,6 +88,24 @@
 
 /*  Start Area  */
 
+MAIN_START : OPEN_WALLET {symTables.push_back(new SymTable); globalAreaOn = false; }
+MAIN_END : CLOSE_WALLET {
+    SymTable * symTable = symTables.back();
+    std::map<std::string, bool> symExist = symTable->getSymExist();
+    int count = 0;
+    for(auto [name, value] : symExist) {
+        if(value == true && getClassIdSymTable(name) != NULL)
+            count++;
+    }       
+    for(unsigned int j = 0;j < count; j++) 
+    {
+        ClassSymTable * classSymTable = classSymTables.back();
+        delete classSymTable;
+        classSymTables.pop_back();
+    }
+    delete symTable;
+    symTables.pop_back();
+}
 MAIN_START : OPEN_WALLET {symTables.push_back(new SymTable); globalAreaOn = false; }
 MAIN_END : CLOSE_WALLET {
     SymTable * symTable = symTables.back();
@@ -184,6 +205,7 @@ CLASS_MEMBER : ACCESS_MODIFIER DECL_START IDSEQUENCE ';' {
                 }
                 unSymbols.clear();
                 declOn = false;
+                unSymbols.clear();
              }
              | FUNCTION_DECLARATION ';' {
                     ClassSymTable * symTable = classSymTables.back();
@@ -242,6 +264,7 @@ LINE_DECLARATION : DECL_START IDSEQUENCE {
             {
                 for(auto [name, val] : unSymbols)
                 {
+                    printf("aiciiiiiiiiiiiiiiii\n");
                     symTable->addSymbol(name, $1);
                     processUpdate(symTable, name, std::string($1), val, '=');
                 }
@@ -486,6 +509,10 @@ TYPE_OF_STATEMENT : TYPEOF '(' EXPRESSION ')'
 /*         RValue Expressions Area           */
 
 EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
+
+                   | COMPLEX_LITERAL {
+                    $$=new arb(fromValueToString(Complex($1->real,$1->imag)),"compl");
+                    }
                     | STRING_LITERAL {$$ = new arb(fromValueToString(std::string($1)),"string");}
                     | BOOLEAN_LITERAL {$$ = new arb(fromValueToString($1),"bool");}
                     | FLOAT_LITERAL {$$ = new arb(fromValueToString($1),"float");}
@@ -522,6 +549,8 @@ EXPRESSION_LITERAL :  INTEGER {$$ = new arb(fromValueToString($1),"int");}
                     | LVALUE_ELEMENT ACCESS FUNCTION_CALL {$$ = $3;}
 
 EXPRESSION : EXPRESSION_LITERAL {$$ = $1;}
+           | '(' EXPRESSION ')' {$$=$2;}
+           | ADD_OPERATOR EXPRESSION {$$= new arb($1,"",$2,nullptr);}
            | EXPRESSION ADD_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
            | EXPRESSION MUL_OPERATOR EXPRESSION {$$ = new arb($2,"",$1,$3);}
            | '(' EXPRESSION ')' {$$ = $2;}
@@ -675,7 +704,7 @@ SymTable * findSymTable(std::string s)
 
     for(int j = symTables.size() - 1;j >= 0; --j)
     {
-        SymTable * symTable = symTables[j];
+        ClassSymTable * symTable = classSymTables[j];
         if(symTable->isSymbolValid(s))
             return symTable;
     }
@@ -723,6 +752,16 @@ ClassSymTable * getClassSymTable(std::string name)
     {
         if(classSymTables[i]->getSymTableName() == name)
             return classSymTables[i];
+    }
+    return NULL;
+}
+ClassSymTable * getClassIdSymTable(std::string s)
+{
+    for(int j = classSymTables.size() - 1; j >= 0; --j)
+    {
+        ClassSymTable * symTable = classSymTables[j];
+        if(symTable->getSymTableName() == s)
+            return symTable;
     }
     return NULL;
 }
@@ -810,6 +849,7 @@ void processUpdate(SymTable * symTable, std::string name, std::string type, valu
 
 void processAssignmentStatement(arb * arb, std::string name, char op)
 {
+    printf("SUNT IN ASSIGMENT STATEMENT YEEEEEEEEEEEEEEEE\n");
     if(arb->hasConflictingTypes())  
     {
         yyerror(ERR(yylineno) + "Invalid Expression in Assignment Statement!\n");
@@ -817,7 +857,7 @@ void processAssignmentStatement(arb * arb, std::string name, char op)
     }
     std::string type = arb->getExpressionType();
     value val = arb->getExpressionResult();
-
+    printf("type : %s , value : %s \n",arb->getExpressionType().c_str(),arb->getExpressionResult().c_str());
     std::string value = std::get<std::string>(val);
     if(type == "int")
         val = std::stoi(value);
@@ -830,6 +870,33 @@ void processAssignmentStatement(arb * arb, std::string name, char op)
         val = value[0];
     else if(type == "float")
         val = std::stof(value);
+    else if(type=="compl"){
+    std::string token=value;
+     int imag,real;
+    size_t iPos = token.find('i'); // poztia lui i
+    if (iPos==string ::npos)
+    {
+        imag = 0;
+        real = stof(token);
+        val=Complex(real, imag);
+    }
+    size_t plusPos = token.find_last_of('+', iPos); // pozitia lu + si -
+    size_t minusPos = token.find_last_of('-', iPos);
+    size_t splitPos = (plusPos != string::npos) ? plusPos : (minusPos !=string::npos) ? minusPos :string::npos; // vedem care e diferita de npos(care e )
+    
+    if (splitPos == string::npos)
+    {
+        real = 0;
+        imag = stof(token.substr(0, iPos));
+        val=Complex(real, imag);
+
+    }
+    imag = stof(token.substr(splitPos + 1, iPos - splitPos - 1));
+    real = stof(token.substr(0, splitPos));
+    if(token[splitPos]=='-' && imag>0)
+    imag=-imag;
+    val=Complex(real, imag);
+}
     if(validateStatement()) 
     {   
         SymTable * symTable;
@@ -888,6 +955,8 @@ std::string fromValueToString(value val)
         ss << get<bool>(val);
     else if(std::holds_alternative<char>(val))
         ss << get<char>(val);
+    else if(std::holds_alternative<Complex>(val))
+        ss << get<Complex>(val);
     ss >> s;
     return s;
 }
