@@ -4,7 +4,48 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+#include "symtable.h"
 using namespace std;
+std::string fromComplexToString(Complex c)
+{
+    std::stringstream ss;
+    std::string s;
+    ss << c;
+    ss >> s;
+    return s;
+}
+Complex parseComplex(const string &token)
+{
+    cout<<token<<'\n';
+    int imag,real;
+    size_t iPos = token.find('i'); // poztia lui i
+    printf("ipos e %ld \n",iPos);
+    if (iPos==string ::npos)
+    {
+        imag = 0.0;
+        real = stof(token);
+        cout<<"primu if :"<<real<<" "<<imag<<'\n';
+        return Complex(real, imag);
+    }
+    size_t plusPos = token.find_last_of('+', iPos); // pozitia lu + si -
+    size_t minusPos = token.find_last_of('-', iPos);
+    size_t splitPos = (plusPos != string::npos) ? plusPos : (minusPos !=string::npos) ? minusPos :string::npos; // vedem care e diferita de npos(care e )
+    printf("splitPos e %ld \n",splitPos);
+    if (splitPos == string::npos)
+    {
+        real = 0.0;
+        imag = stof(token.substr(0, iPos));
+        cout<<"al 2-lea if: "<<real<<" "<<imag<<'\n';
+        return Complex(real, imag);
+    }
+    imag = stof(token.substr(splitPos + 1, iPos - splitPos - 1));
+    real = stof(token.substr(0, splitPos));
+    if(token[splitPos]=='-' && imag>0)
+    imag=-imag;
+    cout<<real<<" "<<imag<<'\n';
+    return Complex(real, imag);
+}
+
 bool isOperator(char ch)
 {
     return strchr("+-*/%!&|><=", ch) != nullptr;
@@ -69,12 +110,13 @@ bool arb::hasConflictingTypes()
         String leftType = left->getExpressionType();
         String rightType = right->getExpressionType();
 
-        if(leftType == "string" && rightType == "string" && token != "+" && token != "==" && token != "!=" && token != ">=" && token != "<=" && token != ">" && token != "<")
+        if (leftType == "string" && rightType == "string" && token != "+" && token != "==" && token != "!=" && token != ">=" && token != "<=" && token != ">" && token != "<")
             return true;
-        
-        if(leftType == "float" && rightType == "float" && token == "%")
+        if (leftType == "compl" && !(token != ">=" && token != "<=" && token != ">" && token != "<" && token!="%"))
             return true;
-        
+        if (leftType == "float" && rightType == "float" && token == "%")
+            return true;
+
         return leftConflict || rightConflict || (leftType != rightType) || ((leftType == "bool" || rightType == "bool") && strchr("+-/*%=<", token[0]));
     }
     return false;
@@ -131,10 +173,11 @@ String arb::getExpressionResult()
         return token;
 
     // Operatorii unari
-    if (isUnaryOperator(token))
+    if (isUnaryOperator(token) && right == nullptr)
     {
         String operandResult = left->getExpressionResult();
         left->type = left->getExpressionType();
+
         if (token == "!")
         {
             if (left->type != "bool" && (left->token == "0" || operandResult == "0"))
@@ -142,17 +185,30 @@ String arb::getExpressionResult()
                 return "true";
             }
             else if (left->type != "bool")
+            {
                 return "false";
+            }
             else
             {
-                if (operandResult == "true")
-                    return "false";
-                return "true";
+                return (operandResult == "true") ? "false" : "true";
             }
         }
         else if (token == "-")
         {
-            return to_string(-stoi(operandResult));
+            if (left->type == "int" || left->type == "bool")
+            {
+                return to_string(-stoi(operandResult));
+            }
+            else if (left->type == "float")
+            {
+                return to_string(-stof(operandResult));
+            }
+            else if (left->type == "compl")
+            {
+                Complex complexOperand = parseComplex(operandResult);
+                Complex negated = Complex(-complexOperand.real, -complexOperand.imag);
+                return fromComplexToString(negated);
+            }
         }
     }
 
@@ -165,51 +221,79 @@ String arb::getExpressionResult()
         right->type = right->getExpressionType();
         if (token == "+")
         {
-            if(left->type == "float")
+            if (left->type == "float")
                 return to_string(stof(leftResult) + stof(rightResult));
-            else if(left->type == "int" || left->type == "bool")
+            else if (left->type == "compl")
+            {
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                Complex result = t1 + t2;
+                return fromComplexToString(result);
+            }
+            else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) + stoi(rightResult));
-            else if(left->type == "string")
+            else if (left->type == "string")
                 return leftResult + rightResult;
-            else if(left->type == "char")
+            else if (left->type == "char")
                 return to_string(char(int(leftResult[0]) + int(rightResult[0])));
         }
         if (token == "-")
         {
-            if(left->type == "float")
+            if (left->type == "float")
                 return to_string(stof(leftResult) - stof(rightResult));
-            else if(left->type == "int" || left->type == "bool")
+            else if (left->type == "compl")
+            {
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                Complex result = t1 - t2;
+                return fromComplexToString(result);
+            }
+            else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) - stoi(rightResult));
-            else if(left->type == "char")
+            else if (left->type == "char")
                 return to_string(char(int(leftResult[0]) - int(rightResult[0])));
         }
         if (token == "*")
         {
-            if(left->type == "float")
+            if (left->type == "float")
                 return to_string(stof(leftResult) * stof(rightResult));
-            else if(left->type == "int" || left->type == "bool")
+            else if (left->type == "compl")
+            {
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                Complex result = t1 * t2;
+                return fromComplexToString(result);
+            }
+            else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) * stoi(rightResult));
-            else if(left->type == "char")
+            else if (left->type == "char")
                 return to_string(char(int(leftResult[0]) * int(rightResult[0])));
         }
         if (token == "/")
         {
             if (stoi(rightResult) == 0)
                 throw runtime_error("Division by zero");
-            if(left->type == "float")
+            if (left->type == "float")
                 return to_string(stof(leftResult) / stof(rightResult));
-            else if(left->type == "int" || left->type == "bool")
+            else if (left->type == "compl")
+            {
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                Complex result = t1 / t2;
+                return fromComplexToString(result);
+            }
+            else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) / stoi(rightResult));
-            else if(left->type == "char")
+            else if (left->type == "char")
                 return to_string(char(int(leftResult[0]) / int(rightResult[0])));
         }
-        else if(token == "%")
+        else if (token == "%")
         {
             if (stoi(rightResult) == 0)
                 throw runtime_error("Division by zero");
-            else if(left->type == "int" || left->type == "bool")
+            else if (left->type == "int" || left->type == "bool")
                 return to_string(stoi(leftResult) % stoi(rightResult));
-            else if(left->type == "char")
+            else if (left->type == "char")
                 return to_string(char(int(leftResult[0]) % int(rightResult[0])));
         }
         else if (token == "&&")
@@ -222,107 +306,144 @@ String arb::getExpressionResult()
         }
         else if (token == ">")
         {
-            if(left->type == "int" || left->type == "bool") 
+            if (left->type == "int" || left->type == "bool")
             {
                 if (stoi(leftResult) > stoi(rightResult))
                     return "true";
                 return "false";
             }
-            else if(left->type == "string" || left->type == "char")
+            else if (left->type == "string" || left->type == "char")
             {
-                if(leftResult > rightResult)
+                if (leftResult > rightResult)
                     return "true";
                 return "false";
             }
-            else if(left->type == "float")
+            else if (left->type == "float")
             {
-                if(stof(leftResult) > stof(rightResult))
+                if (stof(leftResult) > stof(rightResult))
                     return "true";
                 return "false";
             }
         }
         else if (token == ">=")
         {
-            if(left->type == "int" ||  left->type == "bool") 
+            if (left->type == "int" || left->type == "bool")
             {
                 if (stoi(leftResult) >= stoi(rightResult))
                     return "true";
                 return "false";
             }
-            else if(left->type == "string" || left->type == "char")
+            else if (left->type == "string" || left->type == "char")
             {
-                if(leftResult >= rightResult)
+                if (leftResult >= rightResult)
                     return "true";
                 return "false";
             }
-            else if(left->type == "float")
+            else if (left->type == "float")
             {
-                if(stof(leftResult) >= stof(rightResult))
+                if (stof(leftResult) >= stof(rightResult))
                     return "true";
                 return "false";
             }
         }
         else if (token == "<")
         {
-            if(left->type == "int"  || left->type == "bool") 
+            if (left->type == "int" || left->type == "bool")
             {
                 if (stoi(leftResult) < stoi(rightResult))
                     return "true";
                 return "false";
             }
-            else if(left->type == "string" || left->type == "char")
+            else if (left->type == "string" || left->type == "char")
             {
-                if(leftResult < rightResult)
+                if (leftResult < rightResult)
                     return "true";
                 return "false";
             }
-            else if(left->type == "float")
+            else if (left->type == "float")
             {
-                if(stof(leftResult) < stof(rightResult))
+                if (stof(leftResult) < stof(rightResult))
                     return "true";
                 return "false";
             }
         }
         else if (token == "<=")
         {
-            if(left->type == "int" || left->type == "bool") 
+            if (left->type == "int" || left->type == "bool")
             {
                 if (stoi(leftResult) <= stoi(rightResult))
                     return "true";
                 return "false";
             }
-            else if(left->type == "string" || left->type == "char")
+            else if (left->type == "string" || left->type == "char")
             {
-                if(leftResult <= rightResult)
+                if (leftResult <= rightResult)
                     return "true";
                 return "false";
             }
-            else if(left->type == "float")
+            else if (left->type == "float")
             {
-                if(stof(leftResult) <= stof(rightResult))
+                if (stof(leftResult) <= stof(rightResult))
                     return "true";
                 return "false";
             }
         }
         else if (token == "!=")
         {
-            if(left->type == "int" || left->type == "bool") 
+            if (left->type == "int" || left->type == "bool")
             {
                 if (stoi(leftResult) != stoi(rightResult))
                     return "true";
                 return "false";
             }
-            else if(left->type == "string" || left->type == "char")
+            else if (left->type == "string" || left->type == "char")
             {
-                if(leftResult != rightResult)
+                if (leftResult != rightResult)
                     return "true";
                 return "false";
             }
-            else if(left->type == "float")
+            else if (left->type == "float")
             {
-                if(stof(leftResult) != stof(rightResult))
+                if (stof(leftResult) != stof(rightResult))
                     return "true";
                 return "false";
+            }
+            else if(left->type=="compl"){
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                if(t1.real!=t2.real || t1.imag!=t2.imag){
+                    return "true";
+                }
+                else return "false";
+            }
+        }
+        else if (token == "==")
+        {
+            if (left->type == "int" || left->type == "bool")
+            {
+                if (stoi(leftResult) == stoi(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if (left->type == "string" || left->type == "char")
+            {
+                if (leftResult == rightResult)
+                    return "true";
+                return "false";
+            }
+            else if (left->type == "float")
+            {
+                if (stof(leftResult) == stof(rightResult))
+                    return "true";
+                return "false";
+            }
+            else if(left->type=="compl"){
+                Complex t1 = parseComplex(leftResult);
+                Complex t2 = parseComplex(rightResult);
+                if(t1.real!=t2.real || t1.imag!=t2.imag){
+                    return "false";
+                }
+                else return "true";
             }
         }
     }

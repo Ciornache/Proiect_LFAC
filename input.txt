@@ -1,90 +1,139 @@
-int globalX = 5, globalY = 10;
-int isActive = 1;
-string s = "nice book";
+int globalSupply = 5, globalDemand = 10;
+int isBullMarket = 1;
+string market = "GlobalExchange";
+compl c=2+3i;
+in_circulation asset Calculator
+OPEN ORDER
+    blockchain int precision = 20, leverage;
+    in_circulation transaction add -> int ()
+    OPEN ORDER
+        return precision + leverage;
+    STOP LOSS
+    in_circulation transaction multiply -> int ()
+    OPEN ORDER
+        return precision * leverage;
+    STOP LOSS
 
-public class Calculator {
-    private int a = 20, b;
-    public int add() {
-        return a + b;
-    }
-    public int multiply() {
-        return a * b;
-    }
+    in_circulation transaction computeHash -> string (int a, int c, int b)
+    OPEN ORDER
+        return "0xCryptoHash";
+    STOP LOSS
 
-    private string randomFunction(int a, int c, int b) {
-        return "ham";
-    }
+    value_locked transaction validateMarket -> bool (bool ok)
+    OPEN ORDER
+        return isBullMarket;
+    STOP LOSS
 
-    bool ceva(bool ok) {
+    transaction fee -> float ();
+STOP LOSS;
+
+blockchain asset Arbitrum
+OPEN ORDER
+    in_circulation float TVL = 30000000.0;
+    in_circulation transaction isMid -> bool ()
+    OPEN ORDER
         return true;
-    }
+    STOP LOSS
+STOP LOSS;
 
-    float f();
 
-};
 
-int factorial(int n) {
-    if (n == 0 || n == 1) {
+transaction factorial -> int (int n)
+OPEN ORDER
+    if (n == 0 || n == 1)
+    OPEN ORDER
         return 1;
-    } else {
+    STOP LOSS else
+    OPEN ORDER
         return n * factorial(n - 1);
-    }
-}
+    STOP LOSS
+STOP LOSS
 
 int results = [10; 20], vector2 = [15;100];
 
 OPEN WALLET
-    {
-        int localX = 20, localY = 30;
-        print(localX + localY); 
-        string text = "ana";
-        char t = '#';
-        print(t + t);
-        Calculator calc;
-        calc.a = localX;
-        calc.b = localY;
-        int sum = calc.add();
-        int product = calc.multiply();
-        
-        print(sum);        // Print the sum
-        print(product);    // Print the product
-        typeof(sum);       // Print the type of sum
-        }   
-    
-    typeof("ana" == "bogdan");
-    
-    for (int i = 0; i < 10; i = i + 1) {
-        results[i] = factorial(i);
-    }
+    OPEN ORDER
+        int localAssets = 20, localLiabilities = 30;
+        print(localAssets + localLiabilities);
+        string transactionNote = "Trade Confirmed";
+        char currencySymbol = '$';
+        print(currencySymbol + currencySymbol);
 
-    for (int i = 0; i < 10; i = i + 1) {
+        Calculator calc;
+        calc.precision = localAssets;
+        calc.leverage = localLiabilities;
+
+        Arbitrum arb;
+        arb.TVL = 345.12;
+        print(arb.TVL);
+
+        string hash = calc.computeHash(1, "bro", 3); /// Argumentul e de tip string cand ar trebui sa fie int si va da eroare
+
+        int netGain = calc.add();
+        int netProduct = calc.multiply();
+        
+        print(netGain);       // Print the net gain
+        print(netProduct);    // Print the net product
+        typeof(netGain);      // Print the type of net gain
+
+     STOP LOSS   
+    
+    typeof("BTC" == "ETH");
+    for (int i = 0; i < 10; i = i + 1)
+    OPEN ORDER
+        results[i] = factorial(i);
+    STOP LOSS
+
+    for (int i = 0; i < 10; i = i + 1)
+    OPEN ORDER
         print(results[i]);
-    }
+    STOP LOSS
     
     int n = 20;
     
-    for(int d = 1, d2 = 2 * 2 + 3; d * d <= n; d2 -= 10, d *= 1000, d = d + d2) {
+    for(int d = 1, d2 = 2 * 2 + 3; d * d <= n; d2 -= 10, d *= 1000, d = d + d2)
+    OPEN ORDER
         print("Buna Dimineata");
-    }
+    STOP LOSS
 
     Calculator calc;
+    Calculator calc2;
     calc.add();
-    calc.a = 30; calc.b = 69;
-    print(calc.a); print(calc.b);
-    int f = factorial(10);
-    print(f);
+    calc.precision = 30;
+    calc.precision += 15;
+    calc.precision = 12;
+    calc.precision++;
+    calc.precision--;
+    calc.leverage = 69;
+    calc2.leverage = 5;
+    print(calc.precision);
+    print(calc.leverage);
+    print(calc2.leverage);
+    int result = factorial(10);
+    print(result);
 
-    if globalX < globalY && isActive != 0 {
-        print("Condition is true");
-    } else if (globalX == globalY) {
-        print("Global variables are equal");
-    } else {
-        print("Condition is false");
-    }
+    if globalSupply < globalDemand && isBullMarket != 0
+    OPEN ORDER
+        print("Bullish");
+    STOP LOSS else if (globalSupply == globalDemand)
+    OPEN ORDER
+        print("Neutral");
+    STOP LOSS 
+    else 
+    OPEN ORDER
+        print("Bearish");
+    STOP LOSS
 
     int counter = 0;
-    while (counter < 5) {
+    while (counter < 5)
+    OPEN ORDER
         print(counter);
         counter = counter + 1;
-    }
+    STOP LOSS
+    print((-2-i)-(-4+2i));
+    print((2-i)/(2+i));
+    print((2-i)*(2+i)/c);
+    print((c-(2+0i))*c);
+    print((c-(2+0i))*c-(0+6i));
+    //print(1.3+4.3i);
 CLOSE WALLET

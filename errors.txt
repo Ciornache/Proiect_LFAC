@@ -1,0 +1,17 @@
+Error on line 63: Identifier precision is blockchain in the context of class calc
+Error on line 64: Identifier leverage is blockchain in the context of class calc
+Error on line 70: Function computeHash was not declared in this scope!
+Error on line 70: Variable hash is of type string not of type int
+Error on line 71: Function add was not declared in this scope!
+Error on line 72: Function multiply was not declared in this scope!
+Error on line 97: Function add was not declared in this scope!
+Error on line 98: Identifier precision is blockchain in the context of class calc
+Error on line 99: Identifier precision is blockchain in the context of class calc
+Error on line 100: Identifier precision is blockchain in the context of class calc
+Error on line 101: Identifier precision is blockchain in the context of class calc
+Error on line 102: Identifier precision is blockchain in the context of class calc
+Error on line 103: Identifier leverage is blockchain in the context of class calc
+Error on line 104: Identifier leverage is blockchain in the context of class calc2
+Error on line 105: Identifier precision is blockchain in the context of class calc
+Error on line 106: Identifier leverage is blockchain in the context of class calc
+Error on line 107: Identifier leverage is blockchain in the context of class calc2
